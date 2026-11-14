@@ -1,0 +1,3393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Peppa Pig Adventure</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
+
+  :root {
+    --pink-main: #ff7eb9;
+    --pink-dark: #e04f92;
+    --pink-light: #ffc2df;
+    --sky-blue: #64c8ff;
+    --grass-green: #68d354;
+    --grass-dark: #43a033;
+    --sun-yellow: #ffd93d;
+    --mud-brown: #7a4b2a;
+    --white: #ffffff;
+    --text-dark: #2c2233;
+    --shadow-soft: 0 8px 20px rgba(0,0,0,0.18);
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #5bc0f8;
+    font-family: 'Fredoka', 'Comic Sans MS', 'Segoe UI', sans-serif;
+    color: var(--text-dark);
+    touch-action: none;
+  }
+
+  #app-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  canvas#gameCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Pantallas y Overlays UI */
+  .ui-screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: env(safe-area-inset-top, 12px) 14px env(safe-area-inset-bottom, 14px);
+    z-index: 20;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    overflow-y: auto;
+    touch-action: pan-y;
+  }
+
+  .ui-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.96);
+  }
+
+  .backdrop-blur {
+    background: rgba(34, 65, 110, 0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+
+  /* Logotipo principal */
+  .game-logo {
+    text-align: center;
+    margin-bottom: 12px;
+    animation: floatLogo 3s ease-in-out infinite;
+  }
+
+  @keyframes floatLogo {
+    0%, 100% { transform: translateY(0) rotate(-1deg); }
+    50% { transform: translateY(-8px) rotate(1deg); }
+  }
+
+  .logo-badge {
+    display: inline-block;
+    background: linear-gradient(180deg, #ff99c8 0%, #ff5c9e 100%);
+    border: 5px solid #fff;
+    border-radius: 36px;
+    padding: 12px 26px;
+    box-shadow: 0 10px 0 #c93272, 0 15px 25px rgba(0,0,0,0.25);
+  }
+
+  .logo-title {
+    font-size: clamp(1.8rem, 6vw, 3.2rem);
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 3px 3px 0 #c93272, -1px -1px 0 #c93272;
+    line-height: 1.05;
+    letter-spacing: 1px;
+  }
+
+  .logo-sub {
+    display: inline-block;
+    margin-top: 4px;
+    background: var(--sun-yellow);
+    color: #7c3f00;
+    font-weight: 700;
+    font-size: clamp(0.95rem, 3vw, 1.35rem);
+    padding: 3px 16px;
+    border-radius: 20px;
+    border: 3px solid #fff;
+    box-shadow: 0 3px 0 #d99b00;
+  }
+
+  /* Barra de estadísticas globales en inicio */
+  .stats-pill-bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .stat-pill {
+    background: rgba(255, 255, 255, 0.94);
+    border: 3px solid #fff;
+    border-radius: 25px;
+    padding: 5px 14px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.12);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Botones estilo caricatura */
+  .btn {
+    font-family: inherit;
+    font-weight: 700;
+    border: 4px solid #fff;
+    border-radius: 24px;
+    cursor: pointer;
+    transition: transform 0.1s ease, filter 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-align: center;
+    touch-action: manipulation;
+  }
+
+  .btn:active {
+    transform: translateY(4px) scale(0.97);
+  }
+
+  .btn-play {
+    background: linear-gradient(180deg, #7be866 0%, #48b835 100%);
+    color: #fff;
+    font-size: clamp(1.35rem, 4.5vw, 1.8rem);
+    padding: 14px 38px;
+    box-shadow: 0 7px 0 #2d821f, 0 12px 20px rgba(0,0,0,0.22);
+    text-shadow: 2px 2px 0 #2d821f;
+    margin-bottom: 14px;
+  }
+
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(135px, 185px));
+    gap: 10px;
+    max-width: 420px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  @media (min-width: 720px) {
+    .menu-grid {
+      grid-template-columns: repeat(3, minmax(150px, 195px));
+      max-width: 620px;
+    }
+  }
+
+  .btn-menu {
+    padding: 11px 12px;
+    font-size: clamp(0.92rem, 2.8vw, 1.08rem);
+    color: #fff;
+    text-shadow: 1px 2px 0 rgba(0,0,0,0.25);
+  }
+
+  .btn-pink { background: linear-gradient(180deg, #ff8ec4, #e84892); box-shadow: 0 5px 0 #ad2665; }
+  .btn-blue { background: linear-gradient(180deg, #5cc8ff, #2793db); box-shadow: 0 5px 0 #176499; }
+  .btn-orange { background: linear-gradient(180deg, #ffb347, #f07b16); box-shadow: 0 5px 0 #b35305; }
+  .btn-purple { background: linear-gradient(180deg, #b88cff, #824ce0); box-shadow: 0 5px 0 #5628a6; }
+  .btn-yellow { background: linear-gradient(180deg, #ffe259, #f5b700); color: #5c3800; text-shadow: none; box-shadow: 0 5px 0 #b88400; }
+  .btn-red { background: linear-gradient(180deg, #ff6b6b, #d93636); box-shadow: 0 5px 0 #991b1b; }
+
+  /* Paneles modales */
+  .panel-box {
+    background: #fffdf7;
+    border: 5px solid var(--pink-main);
+    border-radius: 28px;
+    width: 100%;
+    max-width: 780px;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+    overflow: hidden;
+  }
+
+  .panel-header {
+    background: linear-gradient(90deg, #ff8ec4, #ff69b4);
+    color: #fff;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 4px solid #fff;
+  }
+
+  .panel-header h2 {
+    font-size: clamp(1.2rem, 4vw, 1.65rem);
+    text-shadow: 2px 2px 0 #c93272;
+  }
+
+  .panel-body {
+    padding: 14px;
+    overflow-y: auto;
+    flex: 1;
+    touch-action: pan-y;
+  }
+
+  .btn-close {
+    background: #ff4d6d;
+    color: #fff;
+    border: 3px solid #fff;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 3px 0 #a81c36;
+  }
+
+  /* Grids de tarjetas (Personajes, Niveles, Minijuegos, Tienda) */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+    gap: 12px;
+  }
+
+  .card {
+    background: #fff;
+    border: 3px solid #e6e0f0;
+    border-radius: 20px;
+    padding: 10px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.07);
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+
+  .card.selected {
+    border-color: #48b835;
+    background: #f0fff0;
+    box-shadow: 0 0 0 3px #9ef08d;
+  }
+
+  .card.locked {
+    background: #f2f2f5;
+    opacity: 0.85;
+  }
+
+  .card-title {
+    font-weight: 700;
+    font-size: 1rem;
+    margin: 6px 0 4px;
+  }
+
+  .card-desc {
+    font-size: 0.78rem;
+    color: #5c5466;
+    margin-bottom: 8px;
+    line-height: 1.25;
+  }
+
+  .btn-sm {
+    padding: 7px 14px;
+    font-size: 0.85rem;
+    border-width: 3px;
+    border-radius: 16px;
+    width: 100%;
+  }
+
+  /* HUD en partida */
+  #game-hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: max(8px, env(safe-area-inset-top, 8px)) 12px 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    pointer-events: none;
+    z-index: 15;
+  }
+
+  #game-hud.hidden {
+    display: none;
+  }
+
+  .hud-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    pointer-events: auto;
+  }
+
+  .hud-badge {
+    background: rgba(255, 255, 255, 0.92);
+    border: 3px solid #fff;
+    border-radius: 18px;
+    padding: 4px 11px;
+    font-weight: 700;
+    font-size: clamp(0.8rem, 2.5vw, 0.98rem);
+    box-shadow: 0 3px 0 rgba(0,0,0,0.16);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .hud-mission {
+    background: rgba(255, 245, 200, 0.95);
+    border-color: #ffd93d;
+    max-width: 240px;
+    font-size: 0.8rem;
+  }
+
+  .hud-icon-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    background: #ff7eb9;
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 0 #c93272;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Controles táctiles móviles */
+  #touch-controls {
+    position: absolute;
+    bottom: max(12px, env(safe-area-inset-bottom, 12px));
+    left: 0;
+    right: 0;
+    padding: 0 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    pointer-events: none;
+    z-index: 16;
+  }
+
+  #touch-controls.hidden {
+    display: none;
+  }
+
+  .touch-cluster {
+    display: flex;
+    gap: 14px;
+    pointer-events: auto;
+  }
+
+  .touch-btn {
+    width: clamp(64px, 16vw, 82px);
+    height: clamp(64px, 16vw, 82px);
+    border-radius: 50%;
+    border: 4px solid rgba(255, 255, 255, 0.9);
+    background: rgba(255, 126, 185, 0.72);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    font-size: clamp(1.5rem, 5vw, 2rem);
+    font-weight: 700;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 0 rgba(173, 38, 101, 0.75), 0 8px 18px rgba(0,0,0,0.25);
+    transition: transform 0.06s ease, background 0.06s ease;
+    touch-action: none;
+  }
+
+  .touch-btn span.lbl {
+    font-size: 0.65rem;
+    letter-spacing: 0.5px;
+    margin-top: -2px;
+  }
+
+  .touch-btn.pressed {
+    transform: translateY(4px) scale(0.94);
+    background: rgba(255, 85, 163, 0.95);
+  }
+
+  .touch-btn.btn-jump {
+    background: rgba(104, 211, 84, 0.78);
+    box-shadow: 0 6px 0 rgba(45, 130, 31, 0.78), 0 8px 18px rgba(0,0,0,0.25);
+  }
+  .touch-btn.btn-jump.pressed {
+    background: rgba(72, 184, 53, 0.96);
+  }
+
+  .touch-btn.btn-act {
+    background: rgba(255, 195, 45, 0.82);
+    color: #5c3800;
+    box-shadow: 0 6px 0 rgba(184, 132, 0, 0.78), 0 8px 18px rgba(0,0,0,0.25);
+  }
+  .touch-btn.btn-act.pressed {
+    background: rgba(255, 217, 61, 0.98);
+  }
+
+  /* Globo de diálogo en juego */
+  #dialogue-box {
+    position: absolute;
+    top: 64px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(92%, 520px);
+    background: #fff;
+    border: 4px solid #ff7eb9;
+    border-radius: 22px;
+    padding: 12px 16px;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.25);
+    z-index: 18;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+  }
+
+  #dialogue-box.hidden {
+    display: none;
+  }
+
+  .dialogue-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #ffe3f0;
+    border: 3px solid #ff7eb9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    flex-shrink: 0;
+  }
+
+  .dialogue-content h4 {
+    color: #d63384;
+    font-size: 0.95rem;
+    margin-bottom: 2px;
+  }
+
+  .dialogue-content p {
+    font-size: 0.9rem;
+    line-height: 1.25;
+  }
+
+  /* Acertijo / Quiz Modal dentro de niveles o minijuegos */
+  .quiz-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  /* Minijuego DOM overlay (para puzzle, memorama, trivia, clasificar) */
+  #minigame-dom-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(30, 50, 90, 0.65);
+    backdrop-filter: blur(5px);
+    z-index: 25;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+  }
+
+  #minigame-dom-overlay.hidden {
+    display: none;
+  }
+
+  .mg-card-panel {
+    background: #fffdf7;
+    border: 5px solid #5cc8ff;
+    border-radius: 26px;
+    width: 100%;
+    max-width: 540px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .memory-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: 12px auto;
+    max-width: 340px;
+  }
+
+  .memory-tile {
+    aspect-ratio: 1;
+    background: linear-gradient(135deg, #ff8ec4, #ff5c9e);
+    border: 3px solid #fff;
+    border-radius: 14px;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #c93272;
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .memory-tile.flipped, .memory-tile.matched {
+    background: #fff;
+    color: #333;
+    border-color: #68d354;
+    box-shadow: 0 4px 0 #43a033;
+  }
+
+  .puzzle-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    width: min(270px, 75vw);
+    height: min(270px, 75vw);
+    margin: 12px auto;
+    background: #d0e8ff;
+    padding: 6px;
+    border-radius: 16px;
+    border: 4px solid #5cc8ff;
+  }
+
+  .puzzle-piece {
+    border-radius: 10px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.15);
+  }
+
+  .puzzle-piece.empty {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    cursor: default;
+  }
+
+  /* Controles de audio y sliders */
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    background: #f5f7fb;
+    border-radius: 16px;
+    margin-bottom: 10px;
+    gap: 10px;
+  }
+
+  input[type="range"] {
+    accent-color: #ff5c9e;
+    width: 140px;
+    height: 24px;
+  }
+
+  /* Toast de notificación */
+  #toast-banner {
+    position: absolute;
+    top: 56px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: #48b835;
+    color: #fff;
+    border: 3px solid #fff;
+    border-radius: 20px;
+    padding: 7px 18px;
+    font-weight: 700;
+    font-size: 0.92rem;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 40;
+    white-space: nowrap;
+  }
+
+  #toast-banner.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+<div id="app-container">
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- Toast flotante -->
+  <div id="toast-banner">¡Objeto recogido!</div>
+
+  <!-- HUD superior durante niveles y minijuegos Canvas -->
+  <div id="game-hud" class="hidden">
+    <div class="hud-group">
+      <div class="hud-badge" id="hud-level-name">Nivel 1</div>
+      <div class="hud-badge">🪙 <span id="hud-coins">0</span></div>
+      <div class="hud-badge">⭐ <span id="hud-stars">0/3</span></div>
+      <div class="hud-badge hud-mission" id="hud-mission-text">Misión: Explora</div>
+    </div>
+    <div class="hud-group">
+      <button class="hud-icon-btn" id="btn-hud-fs" title="Pantalla Completa">⛶</button>
+      <button class="hud-icon-btn" id="btn-hud-pause" title="Pausa">⏸</button>
+    </div>
+  </div>
+
+  <!-- Globo de diálogo interactivo -->
+  <div id="dialogue-box" class="hidden">
+    <div class="dialogue-avatar" id="dialogue-avatar">🐷</div>
+    <div class="dialogue-content">
+      <h4 id="dialogue-speaker">Mamá Pig</h4>
+      <p id="dialogue-text">¡Hola Peppa! Vamos a buscar el osito Teddy.</p>
+    </div>
+  </div>
+
+  <!-- Controles táctiles para móvil -->
+  <div id="touch-controls" class="hidden">
+    <div class="touch-cluster">
+      <button class="touch-btn" id="t-left" aria-label="Izquierda">◀<span class="lbl">IZQ</span></button>
+      <button class="touch-btn" id="t-right" aria-label="Derecha">▶<span class="lbl">DER</span></button>
+    </div>
+    <div class="touch-cluster">
+      <button class="touch-btn btn-act" id="t-act" aria-label="Interactuar">✋<span class="lbl">USAR</span></button>
+      <button class="touch-btn btn-jump" id="t-jump" aria-label="Saltar">▲<span class="lbl">SALTAR</span></button>
+    </div>
+  </div>
+
+  <!-- PANTALLA DE INICIO -->
+  <div id="screen-home" class="ui-screen">
+    <div class="game-logo">
+      <div class="logo-badge">
+        <div class="logo-title">PEPPA PIG</div>
+        <div class="logo-sub">✨ ADVENTURE ✨</div>
+      </div>
+    </div>
+
+    <div class="stats-pill-bar">
+      <div class="stat-pill">🐷 <span id="home-char-name">Peppa Pig</span></div>
+      <div class="stat-pill">🪙 <span id="home-coins">0</span></div>
+      <div class="stat-pill">⭐ <span id="home-stars">0/30</span></div>
+      <div class="stat-pill">🏆 <span id="home-progress">0%</span></div>
+    </div>
+
+    <button class="btn btn-play" id="btn-start-play">▶ JUGAR</button>
+
+    <div class="menu-grid">
+      <button class="btn btn-menu btn-pink" data-open="screen-characters">🐷 Personajes</button>
+      <button class="btn btn-menu btn-blue" data-open="screen-levels">🗺️ 10 Niveles</button>
+      <button class="btn btn-menu btn-orange" data-open="screen-minigames">🎮 10 Minijuegos</button>
+      <button class="btn btn-menu btn-yellow" data-open="screen-shop">🛍️ Tienda y Colección</button>
+      <button class="btn btn-menu btn-purple" data-open="screen-settings">⚙️ Configuración</button>
+      <button class="btn btn-menu btn-blue" id="btn-home-fs">⛶ Pantalla Completa</button>
+    </div>
+    <div style="margin-top: 10px;">
+      <button class="btn btn-sm btn-pink" style="width:auto; padding: 6px 18px;" data-open="screen-credits">ℹ️ Créditos</button>
+    </div>
+  </div>
+
+  <!-- PANTALLA SELECCIÓN DE PERSONAJES -->
+  <div id="screen-characters" class="ui-screen backdrop-blur hidden">
+    <div class="panel-box">
+      <div class="panel-header">
+        <h2>🐷 Personajes Jugables (10)</h2>
+        <button class="btn-close" data-close="screen-characters">✕</button>
+      </div>
+      <div class="panel-body">
+        <p style="margin-bottom:10px; font-size:0.9rem;">Elige tu personaje favorito. Cada uno tiene velocidad y salto únicos y puede jugar todos los niveles.</p>
+        <div class="cards-grid" id="characters-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANTALLA SELECCIÓN DE NIVELES -->
+  <div id="screen-levels" class="ui-screen backdrop-blur hidden">
+    <div class="panel-box">
+      <div class="panel-header">
+        <h2>🗺️ Mapa de Aventuras (10 Niveles)</h2>
+        <button class="btn-close" data-close="screen-levels">✕</button>
+      </div>
+      <div class="panel-body">
+        <div class="cards-grid" id="levels-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANTALLA DE 10 MINIJUEGOS -->
+  <div id="screen-minigames" class="ui-screen backdrop-blur hidden">
+    <div class="panel-box">
+      <div class="panel-header">
+        <h2>🎮 10 Minijuegos Divertidos</h2>
+        <button class="btn-close" data-close="screen-minigames">✕</button>
+      </div>
+      <div class="panel-body">
+        <p style="margin-bottom:10px; font-size:0.9rem;">¡Juega los 10 minijuegos para ganar monedas extra y superar tus récords!</p>
+        <div class="cards-grid" id="minigames-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANTALLA TIENDA Y COLECCIÓN -->
+  <div id="screen-shop" class="ui-screen backdrop-blur hidden">
+    <div class="panel-box">
+      <div class="panel-header">
+        <h2>🛍️ Tienda y Colección (🪙 <span id="shop-coins">0</span>)</h2>
+        <button class="btn-close" data-close="screen-shop">✕</button>
+      </div>
+      <div class="panel-body">
+        <h3 style="margin-bottom:8px; color:#d63384;">🎁 Recompensas y Accesorios</h3>
+        <div class="cards-grid" id="shop-grid" style="margin-bottom:18px;"></div>
+        <h3 style="margin-bottom:8px; color:#2793db;">🧸 Objetos Coleccionables de los Niveles</h3>
+        <div class="cards-grid" id="collection-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANTALLA CONFIGURACIÓN -->
+  <div id="screen-settings" class="ui-screen backdrop-blur hidden">
+    <div class="panel-box" style="max-width:480px;">
+      <div class="panel-header">
+        <h2>⚙️ Configuración</h2>
+        <button class="btn-close" data-close="screen-settings">✕</button>
+      </div>
+      <div class="panel-body">
+        <div class="setting-row">
+          <span>🎵 Música Ambiental</span>
+          <input type="range" id="cfg-music-vol" min="0" max="100" value="50">
+        </div>
+        <div class="setting-row">
+          <span>🔊 Efectos de Sonido</span>
+          <input type="range" id="cfg-sfx-vol" min="0" max="100" value="80">
+        </div>
+        <div class="setting-row">
+          <span>🔇 Silenciar Todo</span>
+          <button class="btn btn-sm btn-blue" style="width:auto;" id="cfg-mute-btn">Activado</button>
+        </div>
+        <div class="setting-row">
+          <span>📱 Pantalla Completa</span>
+          <button class="btn btn-sm btn-pink" style="width:auto;" id="cfg-fs-btn">Activar</button>
+        </div>
+        <hr style="margin:14px 0; border:1px solid #eee;">
+        <div style="text-align:center;">
+          <button class="btn btn-sm btn-red" id="cfg-reset-btn">🗑️ Reiniciar Progreso Guardado</button>
+          <div id="reset-confirm-box" class="hidden" style="margin-top:10px; background:#ffe5e5; padding:10px; border-radius:14px;">
+            <p style="font-size:0.85rem; font-weight:700; margin-bottom:8px;">¿Seguro que quieres borrar monedas, estrellas y niveles?</p>
+            <div style="display:flex; gap:8px; justify-content:center;">
+              <button class="btn btn-sm btn-red" id="cfg-reset-yes">Sí, borrar</button>
+              <button class="btn btn-sm btn-blue" id="cfg-reset-no">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANTALLA CRÉDITOS -->
+  <div id="screen-credits" class="ui-screen backdrop-blur hidden">
+    <div class="panel-box" style="max-width:460px;">
+      <div class="panel-header">
+        <h2>ℹ️ Créditos</h2>
+        <button class="btn-close" data-close="screen-credits">✕</button>
+      </div>
+      <div class="panel-body" style="text-align:center; line-height:1.5;">
+        <h3 style="color:#ff5c9e; font-size:1.3rem; margin-bottom:6px;">Peppa Pig Adventure</h3>
+        <p>Videojuego interactivo HTML5 diseñado especialmente para dispositivos móviles, tablets y computadoras.</p>
+        <p style="margin-top:10px; font-size:0.9rem; color:#555;">
+          • Motor 2D Canvas API a 60 FPS<br>
+          • 10 Personajes jugables con animaciones propias<br>
+          • 10 Niveles de aventura y exploración<br>
+          • 10 Minijuegos interactivos<br>
+          • Audio sintetizado Web Audio API
+        </p>
+        <button class="btn btn-pink" style="margin-top:16px;" data-close="screen-credits">¡Genial!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANTALLA PAUSA -->
+  <div id="screen-pause" class="ui-screen backdrop-blur hidden">
+    <div class="panel-box" style="max-width:380px; text-align:center;">
+      <div class="panel-header">
+        <h2>⏸ Juego en Pausa</h2>
+      </div>
+      <div class="panel-body" style="display:flex; flex-direction:column; gap:10px;">
+        <button class="btn btn-play" style="margin:0; font-size:1.2rem;" id="btn-resume">▶ Continuar</button>
+        <button class="btn btn-menu btn-orange" id="btn-restart-level">🔄 Reiniciar</button>
+        <button class="btn btn-menu btn-blue" id="btn-pause-settings">⚙️ Audio y Pantalla</button>
+        <button class="btn btn-menu btn-red" id="btn-exit-home">🏠 Salir al Menú</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANTALLA VICTORIA / RESULTADOS -->
+  <div id="screen-victory" class="ui-screen backdrop-blur hidden">
+    <div class="panel-box" style="max-width:430px; text-align:center;">
+      <div class="panel-header" style="justify-content:center;">
+        <h2 id="victory-title">🎉 ¡Nivel Completado!</h2>
+      </div>
+      <div class="panel-body">
+        <div id="victory-stars" style="font-size:2.6rem; margin:6px 0;">⭐⭐⭐</div>
+        <p id="victory-subtitle" style="font-size:1.05rem; font-weight:700; margin-bottom:10px;">¡Lo hiciste genial!</p>
+        <div style="background:#fff6d6; border:3px solid #ffd93d; border-radius:18px; padding:10px; margin-bottom:14px;">
+          <p style="font-weight:700;">🪙 Monedas ganadas: +<span id="victory-coins">25</span></p>
+          <p id="victory-unlock-msg" style="color:#2d821f; font-weight:700; font-size:0.9rem; margin-top:4px;"></p>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <button class="btn btn-play" style="margin:0; font-size:1.2rem;" id="btn-victory-next">Siguiente Nivel ▶</button>
+          <button class="btn btn-menu btn-orange" id="btn-victory-replay">🔄 Volver a Jugar</button>
+          <button class="btn btn-menu btn-blue" id="btn-victory-home">🏠 Menú Principal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OVERLAY PARA MINIJUEGOS DE INTERFAZ Y ACERTIJOS -->
+  <div id="minigame-dom-overlay" class="hidden">
+    <div class="mg-card-panel" id="mg-dom-content"></div>
+  </div>
+</div>
+
+<script>
+/**
+ * ============================================================================
+ * PEPPA PIG ADVENTURE - MOTOR DE JUEGO COMPLETO EN HTML5 CANVAS + JS PURO
+ * ============================================================================
+ */
+
+// 1. GESTOR DE AUDIO PROCEDURAL (WEB AUDIO API)
+class SoundEngine {
+  constructor() {
+    this.ctx = null;
+    this.musicVol = 0.45;
+    this.sfxVol = 0.75;
+    this.muted = false;
+    this.musicTimer = null;
+    this.noteIdx = 0;
+    // Melodía infantil alegre estilo Peppa
+    this.melody = [
+      392.00, 329.63, 261.63, 293.66, 392.00, 0,
+      392.00, 493.88, 392.00, 329.63, 293.66, 0,
+      329.63, 349.23, 392.00, 440.00, 392.00, 329.63,
+      293.66, 329.63, 261.63, 0, 261.63, 0
+    ];
+  }
+
+  init() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) this.ctx = new AudioCtx();
+    }
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume().catch(() => {});
+    }
+  }
+
+  startMusic() {
+    this.init();
+    if (this.musicTimer) return;
+    this.musicTimer = setInterval(() => {
+      if (this.muted || !this.ctx || document.hidden || this.musicVol <= 0.01) return;
+      const freq = this.melody[this.noteIdx % this.melody.length];
+      this.noteIdx++;
+      if (freq > 0) {
+        this.playTone(freq, 0.18, 'sine', this.musicVol * 0.22);
+      }
+    }, 280);
+  }
+
+  playTone(freq, duration, type = 'sine', vol = 0.3, slideTo = null) {
+    if (this.muted) return;
+    this.init();
+    if (!this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, now);
+      if (slideTo) {
+        osc.frequency.exponentialRampToValueAtTime(slideTo, now + duration);
+      }
+      gain.gain.setValueAtTime(Math.max(0.001, vol), now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + duration + 0.02);
+    } catch (e) {}
+  }
+
+  playJump() {
+    this.playTone(260, 0.22, 'sine', this.sfxVol * 0.35, 580);
+  }
+
+  playCoin() {
+    this.playTone(784, 0.09, 'triangle', this.sfxVol * 0.35);
+    setTimeout(() => this.playTone(1046.5, 0.16, 'triangle', this.sfxVol * 0.35), 75);
+  }
+
+  playMud() {
+    this.playTone(180, 0.14, 'sawtooth', this.sfxVol * 0.25, 95);
+    setTimeout(() => this.playTone(240, 0.16, 'sine', this.sfxVol * 0.3, 120), 60);
+  }
+
+  playInteract() {
+    this.playTone(440, 0.1, 'sine', this.sfxVol * 0.3, 660);
+  }
+
+  playError() {
+    this.playTone(220, 0.25, 'sawtooth', this.sfxVol * 0.25, 140);
+  }
+
+  playVictory() {
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    notes.forEach((n, i) => {
+      setTimeout(() => this.playTone(n, 0.24, 'triangle', this.sfxVol * 0.4), i * 120);
+    });
+  }
+}
+
+const sound = new SoundEngine();
+
+// 2. DATOS MAESTROS: 10 PERSONAJES, 10 NIVELES, 10 MINIJUEGOS Y TIENDA
+const CHARACTERS = [
+  { id: 'peppa', name: 'Peppa Pig', skin: '#ffb3d1', outline: '#e05a94', dress: '#ff4d4d', species: 'pig', scale: 1.0, speed: 275, jump: 560, unlockedDefault: true, price: 0, desc: '¡Le encanta saltar en charcos de lodo!' },
+  { id: 'george', name: 'George Pig', skin: '#ffb3d1', outline: '#e05a94', dress: '#3b82f6', species: 'pig', scale: 0.82, speed: 285, jump: 540, unlockedDefault: true, price: 0, desc: 'Lleva siempre a su amigo Dinosaurio.' },
+  { id: 'mummy', name: 'Mamá Pig', skin: '#ffb3d1', outline: '#e05a94', dress: '#ff8c24', species: 'pig', scale: 1.15, speed: 265, jump: 580, unlockedDefault: true, price: 0, desc: 'Muy lista, amable y excelente saltadora.' },
+  { id: 'daddy', name: 'Papá Pig', skin: '#ffb3d1', outline: '#e05a94', dress: '#26a69a', species: 'pig', scale: 1.24, speed: 255, jump: 600, unlockedDefault: true, price: 0, desc: '¡Experto mundial en saltar charcos!' },
+  { id: 'suzy', name: 'Suzy Sheep', skin: '#ffffff', outline: '#b0b8c4', dress: '#ff85b3', species: 'sheep', scale: 1.0, speed: 290, jump: 565, unlockedDefault: false, price: 40, desc: 'La mejor amiga de Peppa. Muy veloz.' },
+  { id: 'rebecca', name: 'Rebecca Rabbit', skin: '#e8d5c4', outline: '#9c826b', dress: '#5cc8ff', species: 'rabbit', scale: 1.0, speed: 295, jump: 615, unlockedDefault: false, price: 60, desc: 'Salta más alto que nadie con sus orejas.' },
+  { id: 'danny', name: 'Danny Dog', skin: '#b5835a', outline: '#6e472b', dress: '#8b5cf6', species: 'dog', scale: 1.02, speed: 305, jump: 570, unlockedDefault: false, price: 80, desc: '¡Guau! Corre muy rápido en todas partes.' },
+  { id: 'pedro', name: 'Pedro Pony', skin: '#c99b72', outline: '#7a5434', dress: '#facc15', species: 'pony', scale: 1.0, speed: 280, jump: 575, unlockedDefault: false, price: 100, desc: 'Tranquilo, curioso y con gafas geniales.' },
+  { id: 'emily', name: 'Emily Elephant', skin: '#b8c4d0', outline: '#6e7c8a', dress: '#ffad60', species: 'elephant', scale: 1.12, speed: 270, jump: 590, unlockedDefault: false, price: 120, desc: 'Fuerte y alegre con su trompa simpática.' },
+  { id: 'candy', name: 'Candy Cat', skin: '#f5c77e', outline: '#b38136', dress: '#4ade80', species: 'cat', scale: 0.98, speed: 310, jump: 585, unlockedDefault: false, price: 150, desc: 'Ágil y veloz como una gatita exploradora.' }
+];
+
+const LEVELS = [
+  {
+    id: 1, title: 'La Casa de Peppa', icon: '🏡', theme: 'house',
+    mission: 'Habla con la familia y encuentra el Osito Teddy',
+    collectible: { id: 'teddy', name: 'Osito Teddy', icon: '🧸' },
+    skyTop: '#6ec6ff', skyBottom: '#cceeff', groundColor: '#68d354',
+    width: 2400,
+    npcs: [
+      { x: 380, charId: 'mummy', name: 'Mamá Pig', text: '¡Hola! Busca el Osito Teddy en el piso de arriba de la casa.' },
+      { x: 920, charId: 'daddy', name: 'Papá Pig', text: '¡Jo, jo! Usa el botón USAR para abrir la puerta amarilla.' },
+      { x: 1580, charId: 'george', name: 'George Pig', text: '¡Dinosaurio! ¡Grrr! ¡El osito está cerca de la meta!' }
+    ],
+    riddle: null
+  },
+  {
+    id: 2, title: 'El Parque', icon: '🌳', theme: 'park',
+    mission: 'Recoge las estrellas y el Juguete Cohete',
+    collectible: { id: 'rocket', name: 'Cohete Espacial', icon: '🚀' },
+    skyTop: '#56ccf2', skyBottom: '#bdf0ff', groundColor: '#5ec94b',
+    width: 2600,
+    npcs: [
+      { x: 420, charId: 'suzy', name: 'Suzy Sheep', text: '¡Beee! Sube por las plataformas de colores del parque.' },
+      { x: 1450, charId: 'george', name: 'George Pig', text: '¡Mira qué alto puedes saltar hasta el cohete!' }
+    ],
+    riddle: null
+  },
+  {
+    id: 3, title: 'Los Charcos de Lodo', icon: '💦', theme: 'mud',
+    mission: '¡Salta en 5 charcos de lodo y recoge las Botas Doradas!',
+    collectible: { id: 'boots', name: 'Botas de Oro', icon: '👢' },
+    skyTop: '#74b9ff', skyBottom: '#dff9fb', groundColor: '#55b844',
+    width: 2800,
+    mudGoal: 5,
+    npcs: [
+      { x: 350, charId: 'daddy', name: 'Papá Pig', text: 'Si vas a saltar en charcos de lodo, ¡ponte tus botas!' },
+      { x: 1700, charId: 'peppa', name: 'Peppa Pig', text: '¡Me encanta saltar arriba y abajo en los charcos de lodo!' }
+    ],
+    riddle: null
+  },
+  {
+    id: 4, title: 'La Escuela', icon: '🏫', theme: 'school',
+    mission: 'Resuelve el acertijo de clase y recoge el Libro Mágico',
+    collectible: { id: 'book', name: 'Libro Mágico', icon: '📚' },
+    skyTop: '#81ecec', skyBottom: '#dfe6e9', groundColor: '#7bed9f',
+    width: 2600,
+    npcs: [
+      { x: 450, charId: 'pedro', name: 'Pedro Pony', text: '¡Hola! Hoy aprendemos los números y colores en la escuela.' },
+      { x: 1200, charId: 'emily', name: 'Emily Elephant', text: 'Responde la pregunta en el pizarrón para abrir la puerta.' }
+    ],
+    riddle: {
+      question: '¿De qué color es el vestido favorito de Peppa Pig?',
+      options: ['Rojo', 'Azul', 'Verde', 'Amarillo'],
+      answer: 0
+    }
+  },
+  {
+    id: 5, title: 'El Bosque', icon: '🌲', theme: 'forest',
+    mission: 'Cruza los puentes del bosque y encuentra la Cesta de Bayas',
+    collectible: { id: 'berries', name: 'Cesta de Bayas', icon: '🍓' },
+    skyTop: '#48dbfb', skyBottom: '#c8d6e5', groundColor: '#2ecc71',
+    width: 2900,
+    npcs: [
+      { x: 500, charId: 'rebecca', name: 'Rebecca Rabbit', text: '¡Ten cuidado al cruzar los puentes sobre el arroyo!' },
+      { x: 1850, charId: 'candy', name: 'Candy Cat', text: '¡Miau! Los árboles altos esconden muchas monedas.' }
+    ],
+    riddle: null
+  },
+  {
+    id: 6, title: 'La Playa', icon: '🏖️', theme: 'beach',
+    mission: 'Recoge las conchas marinas y el Balde de Castillo',
+    collectible: { id: 'bucket', name: 'Balde de Playa', icon: '🪣' },
+    skyTop: '#00d2d3', skyBottom: '#fef9e7', groundColor: '#f6d365',
+    width: 2800,
+    npcs: [
+      { x: 420, charId: 'danny', name: 'Danny Dog', text: '¡Guau! ¡Qué día tan soleado para jugar en la arena!' },
+      { x: 1620, charId: 'mummy', name: 'Mamá Pig', text: '¡No olvides ponerte protector solar y recoger las estrellas!' }
+    ],
+    riddle: null
+  },
+  {
+    id: 7, title: 'El Supermercado', icon: '🛒', theme: 'market',
+    mission: 'Completa la lista de compras y recoge el Pastel de Fresa',
+    collectible: { id: 'cake', name: 'Pastel de Fresa', icon: '🎂' },
+    skyTop: '#a29bfe', skyBottom: '#ffeaa7', groundColor: '#fab1a0',
+    width: 2700,
+    npcs: [
+      { x: 400, charId: 'mummy', name: 'Mamá Pig', text: 'Necesitamos tomates, queso, manzanas y un pastel.' },
+      { x: 1550, charId: 'daddy', name: 'Papá Pig', text: '¡Jo, jo! Asegúrate de que no se nos olvide el pastel.' }
+    ],
+    riddle: {
+      question: '¿Qué fruta roja es la favorita para decorar el pastel?',
+      options: ['Limón', 'Fresa', 'Brócoli', 'Cebolla'],
+      answer: 1
+    }
+  },
+  {
+    id: 8, title: 'Parque de Diversiones', icon: '🎡', theme: 'fair',
+    mission: 'Sube por las plataformas de feria y gana el Globo Gigante',
+    collectible: { id: 'balloon', name: 'Globo de Feria', icon: '🎈' },
+    skyTop: '#ff9ff3', skyBottom: '#feca57', groundColor: '#1dd1a1',
+    width: 3000,
+    npcs: [
+      { x: 480, charId: 'candy', name: 'Candy Cat', text: '¡Miau! ¡Bienvenido a la feria llena de premios!' },
+      { x: 1900, charId: 'suzy', name: 'Suzy Sheep', text: '¡Salta hasta lo más alto para conseguir la tercera estrella!' }
+    ],
+    riddle: null
+  },
+  {
+    id: 9, title: 'Aventura en la Montaña', icon: '⛰️', theme: 'mountain',
+    mission: 'Escala las cumbres y encuentra el Telescopio Dorado',
+    collectible: { id: 'telescope', name: 'Telescopio Dorado', icon: '🔭' },
+    skyTop: '#54a0ff', skyBottom: '#c8d6e5', groundColor: '#78e08f',
+    width: 3200,
+    npcs: [
+      { x: 450, charId: 'danny', name: 'Danny Dog', text: '¡Desde la cima de la montaña se ve todo el mundo!' },
+      { x: 2100, charId: 'pedro', name: 'Pedro Pony', text: '¡Ya casi llegas a la cumbre, sigue saltando!' }
+    ],
+    riddle: null
+  },
+  {
+    id: 10, title: 'La Gran Aventura Final', icon: '👑', theme: 'finale',
+    mission: 'Supera el desafío final y consigue la Corona Real',
+    collectible: { id: 'crown', name: 'Corona Real', icon: '👑' },
+    skyTop: '#ff7eb9', skyBottom: '#ffd93d', groundColor: '#68d354',
+    width: 3400,
+    npcs: [
+      { x: 400, charId: 'mummy', name: 'Mamá Pig', text: '¡Todos tus amigos están aquí para animarte en la gran final!' },
+      { x: 1400, charId: 'daddy', name: 'Papá Pig', text: '¡Salta los charcos, cruza los puentes y llega al castillo!' },
+      { x: 2600, charId: 'george', name: 'George Pig', text: '¡Hurra! ¡La meta final está justo delante!' }
+    ],
+    riddle: {
+      question: '¿Qué es lo que más les gusta hacer a Peppa y George después de llover?',
+      options: ['Dormir todo el día', 'Saltar en charcos de lodo', 'Comer sopa fría', 'Limpiar zapatos'],
+      answer: 1
+    }
+  }
+];
+
+const MINIGAMES = [
+  { id: 1, title: 'Saltar Charcos', icon: '💦', type: 'canvas_puddles', desc: 'Salta todos los charcos de lodo antes que se acabe el tiempo.' },
+  { id: 2, title: 'Objetos Escondidos', icon: '🔍', type: 'dom_hidden', desc: 'Encuentra y toca los 6 juguetes escondidos en la escena.' },
+  { id: 3, title: 'Carrera de Amigos', icon: '🏁', type: 'canvas_race', desc: 'Corre y salta obstáculos para ganar a Suzy y Danny.' },
+  { id: 4, title: 'Rompecabezas 3x3', icon: '🧩', type: 'dom_puzzle', desc: 'Ordena las piezas del rompecabezas de Peppa Pig.' },
+  { id: 5, title: 'Memorama', icon: '🃏', type: 'dom_memory', desc: 'Encuentra todas las parejas de cartas iguales.' },
+  { id: 6, title: 'Atrapar Estrellas', icon: '🌟', type: 'canvas_catch', desc: 'Muévete de lado a lado atrapando estrellas doradas.' },
+  { id: 7, title: 'Clasificar Colores', icon: '🎨', type: 'dom_colors', desc: 'Envía cada objeto a su cesta del color correcto.' },
+  { id: 8, title: 'Trivia Infantil', icon: '❓', type: 'dom_trivia', desc: 'Responde 5 divertidas preguntas del mundo de Peppa.' },
+  { id: 9, title: 'Castillo de Arena', icon: '🏰', type: 'canvas_tower', desc: 'Toca en el momento justo para apilar un castillo alto.' },
+  { id: 10, title: 'Salto a las Nubes', icon: '☁️', type: 'canvas_jumper', desc: 'Salta de nube en nube subiendo cada vez más alto.' }
+];
+
+const SHOP_ITEMS = [
+  { id: 'hat_crown', name: 'Coronita Brillante', icon: '👑', price: 35, desc: 'Tu personaje lleva una corona dorada al jugar.' },
+  { id: 'hat_party', name: 'Gorrito de Fiesta', icon: '🥳', price: 25, desc: 'Un colorido gorro de celebración.' },
+  { id: 'trail_stars', name: 'Estela de Estrellas', icon: '✨', price: 50, desc: 'Suelta estrellitas mágicas al correr y saltar.' },
+  { id: 'trophy_gold', name: 'Copa de Campeón', icon: '🏆', price: 80, desc: 'Trofeo especial para tu vitrina de récords.' }
+];
+
+// 3. ESTADO DEL JUEGO Y GUARDADO EN LOCALSTORAGE
+const SAVE_KEY = 'peppa_pig_adventure_save_v1';
+
+const defaultSave = {
+  coins: 20,
+  unlockedLevel: 1,
+  levelStars: {}, // { 1: 3, 2: 2 ... }
+  selectedChar: 'peppa',
+  unlockedChars: ['peppa', 'george', 'mummy', 'daddy'],
+  collectibles: [], // ['teddy', ...]
+  purchasedItems: [],
+  equippedHat: null,
+  trailEnabled: false,
+  minigameBest: {},
+  settings: {
+    musicVol: 45,
+    sfxVol: 80,
+    muted: false
+  }
+};
+
+let saveData = loadSave();
+
+function loadSave() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return { ...defaultSave, ...parsed, settings: { ...defaultSave.settings, ...(parsed.settings || {}) } };
+    }
+  } catch (e) {}
+  return JSON.parse(JSON.stringify(defaultSave));
+}
+
+function writeSave() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
+  } catch (e) {}
+  updateHomeStats();
+}
+
+// 4. REFERENCIAS DOM Y CONFIGURACIÓN DE CANVAS
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let W = window.innerWidth;
+let H = window.innerHeight;
+
+function resizeCanvas() {
+  W = window.innerWidth;
+  H = window.innerHeight;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// Estado global de ejecución
+let gameMode = 'MENU'; // MENU, LEVEL, MINIGAME_CANVAS, PAUSED
+let currentLevelObj = null;
+let levelState = null;
+let mgCanvasState = null;
+let lastTime = 0;
+let globalTime = 0;
+
+// Controles (Teclado + Táctil)
+const input = {
+  left: false,
+  right: false,
+  jump: false,
+  jumpJustPressed: false,
+  act: false,
+  actJustPressed: false
+};
+
+function setupInputs() {
+  window.addEventListener('keydown', (e) => {
+    if (['ArrowLeft', 'KeyA'].includes(e.code)) input.left = true;
+    if (['ArrowRight', 'KeyD'].includes(e.code)) input.right = true;
+    if (['Space', 'ArrowUp', 'KeyW'].includes(e.code)) {
+      if (!input.jump) input.jumpJustPressed = true;
+      input.jump = true;
+    }
+    if (['KeyE', 'Enter'].includes(e.code)) {
+      if (!input.act) input.actJustPressed = true;
+      input.act = true;
+    }
+    if (['Escape', 'KeyP'].includes(e.code)) {
+      if (gameMode === 'LEVEL' || gameMode === 'MINIGAME_CANVAS') togglePause(true);
+      else if (gameMode === 'PAUSED') togglePause(false);
+    }
+  });
+
+  window.addEventListener('keyup', (e) => {
+    if (['ArrowLeft', 'KeyA'].includes(e.code)) input.left = false;
+    if (['ArrowRight', 'KeyD'].includes(e.code)) input.right = false;
+    if (['Space', 'ArrowUp', 'KeyW'].includes(e.code)) input.jump = false;
+    if (['KeyE', 'Enter'].includes(e.code)) input.act = false;
+  });
+
+  // Botones táctiles multitouch
+  const bindTouch = (id, key, justKey = null) => {
+    const el = document.getElementById(id);
+    const press = (e) => {
+      e.preventDefault();
+      sound.init();
+      if (justKey && !input[key]) input[justKey] = true;
+      input[key] = true;
+      el.classList.add('pressed');
+    };
+    const release = (e) => {
+      e.preventDefault();
+      input[key] = false;
+      el.classList.remove('pressed');
+    };
+    el.addEventListener('touchstart', press, { passive: false });
+    el.addEventListener('touchend', release, { passive: false });
+    el.addEventListener('touchcancel', release, { passive: false });
+    el.addEventListener('mousedown', press);
+    el.addEventListener('mouseup', release);
+    el.addEventListener('mouseleave', release);
+  };
+
+  bindTouch('t-left', 'left');
+  bindTouch('t-right', 'right');
+  bindTouch('t-jump', 'jump', 'jumpJustPressed');
+  bindTouch('t-act', 'act', 'actJustPressed');
+
+  // Tap directo en canvas para minijuegos de un toque (Castillo de arena, etc.)
+  canvas.addEventListener('pointerdown', () => {
+    sound.init();
+    if (gameMode === 'MINIGAME_CANVAS' && mgCanvasState && mgCanvasState.onTap) {
+      mgCanvasState.onTap();
+    }
+  });
+}
+setupInputs();
+
+// Pausar automáticamente al cambiar de pestaña
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && (gameMode === 'LEVEL' || gameMode === 'MINIGAME_CANVAS')) {
+    togglePause(true);
+  }
+});
+
+// 5. RENDERIZADO PROCEDURAL DE LOS 10 PERSONAJES ESTILO PEPPA PIG
+function drawCharacter(ctx, charData, x, y, animState, facing = 1, time = 0, options = {}) {
+  ctx.save();
+  ctx.translate(x, y);
+  const sc = (charData.scale || 1) * (options.extraScale || 1);
+  ctx.scale(facing * sc, sc);
+
+  // Rebote al caminar/correr
+  let bobY = 0;
+  let legAngle = 0;
+  let armAngle = 0;
+  if (animState === 'walk' || animState === 'run') {
+    const freq = animState === 'run' ? 16 : 10;
+    bobY = Math.abs(Math.sin(time * freq)) * -5;
+    legAngle = Math.sin(time * freq) * 0.55;
+    armAngle = -Math.sin(time * freq) * 0.45;
+  } else if (animState === 'jump') {
+    bobY = -4;
+    legAngle = 0.45;
+    armAngle = -0.8;
+  } else {
+    bobY = Math.sin(time * 3) * 1.5; // respiración suave
+  }
+
+  ctx.translate(0, bobY);
+  ctx.lineWidth = 2.6;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // Sombra en el suelo
+  ctx.fillStyle = 'rgba(0,0,0,0.16)';
+  ctx.beginPath();
+  ctx.ellipse(0, 2, 18, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Piernas y zapatos negros
+  const drawLeg = (offsetX, angle) => {
+    ctx.save();
+    ctx.translate(offsetX, -14);
+    ctx.rotate(angle);
+    ctx.strokeStyle = charData.outline;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, 12);
+    ctx.stroke();
+    // Zapato
+    ctx.fillStyle = '#222';
+    ctx.beginPath();
+    ctx.ellipse(3, 13, 6.5, 3.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  };
+  drawLeg(-6, legAngle);
+  drawLeg(6, -legAngle);
+
+  // Colita
+  ctx.strokeStyle = charData.outline;
+  ctx.beginPath();
+  if (charData.species === 'pig') {
+    ctx.arc(-16, -22, 4, 0, Math.PI * 1.7);
+  } else if (charData.species === 'dog' || charData.species === 'cat') {
+    ctx.moveTo(-14, -20);
+    ctx.quadraticCurveTo(-24, -28 + Math.sin(time * 8) * 4, -20, -34);
+  }
+  ctx.stroke();
+
+  // Cuerpo (Vestido o camisa acampanada)
+  ctx.fillStyle = charData.dress;
+  ctx.strokeStyle = '#222';
+  ctx.beginPath();
+  ctx.moveTo(-11, -38);
+  ctx.lineTo(11, -38);
+  ctx.lineTo(17, -14);
+  ctx.lineTo(-17, -14);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Brazos
+  const drawArm = (ox, oy, angle) => {
+    ctx.save();
+    ctx.translate(ox, oy);
+    ctx.rotate(angle);
+    ctx.strokeStyle = charData.outline;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(12, 6);
+    ctx.moveTo(9, 4);
+    ctx.lineTo(13, 2);
+    ctx.moveTo(9, 5);
+    ctx.lineTo(12, 9);
+    ctx.stroke();
+    ctx.restore();
+  };
+  drawArm(-10, -32, -armAngle);
+  drawArm(10, -32, armAngle);
+
+  // Dinosaurio de George
+  if (charData.id === 'george') {
+    ctx.save();
+    ctx.translate(18, -24);
+    ctx.fillStyle = '#48b835';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 7, 5, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(6, -5, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Cabeza según especie
+  ctx.save();
+  ctx.translate(0, -52);
+  ctx.fillStyle = charData.skin;
+  ctx.strokeStyle = charData.outline;
+
+  // Orejas traseras
+  if (charData.species === 'rabbit') {
+    ctx.beginPath();
+    ctx.ellipse(-6, -24, 4, 14, -0.1, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(2, -25, 4, 14, 0.1, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+  } else if (charData.species === 'cat') {
+    ctx.beginPath();
+    ctx.moveTo(-12, -10); ctx.lineTo(-9, -23); ctx.lineTo(-2, -13);
+    ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(2, -13); ctx.lineTo(8, -23); ctx.lineTo(11, -10);
+    ctx.fill(); ctx.stroke();
+  } else {
+    // Orejas redondeadas (cerdito, oveja, perro, pony, elefante)
+    ctx.beginPath();
+    ctx.ellipse(-7, -17, 3.8, 6.5, -0.15, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(1, -18, 3.8, 6.5, 0.1, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+  }
+
+  // Forma principal de la cabeza y hocico
+  ctx.beginPath();
+  if (charData.species === 'elephant') {
+    ctx.arc(-2, 0, 16, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    // Trompa
+    ctx.beginPath();
+    ctx.moveTo(11, -2);
+    ctx.quadraticCurveTo(25, 0, 22, 11);
+    ctx.quadraticCurveTo(18, 13, 16, 7);
+    ctx.quadraticCurveTo(16, 3, 10, 4);
+    ctx.fill(); ctx.stroke();
+  } else if (charData.species === 'cat' || charData.species === 'rabbit') {
+    ctx.arc(0, 0, 15.5, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+  } else {
+    // Cabeza con hocico característico estilo Peppa
+    ctx.arc(-3, 0, 15.5, Math.PI * 0.45, Math.PI * 1.65);
+    ctx.lineTo(17, -9);
+    ctx.arc(17, -3, 6, -Math.PI * 0.5, Math.PI * 0.5);
+    ctx.lineTo(3, 5);
+    ctx.arc(-3, 0, 15.5, 0.25, Math.PI * 0.45);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+  }
+
+  // Fosas nasales en hocico
+  if (charData.species === 'pig' || charData.species === 'sheep' || charData.species === 'dog' || charData.species === 'pony') {
+    ctx.fillStyle = charData.outline;
+    ctx.beginPath();
+    ctx.arc(16, -4, 1.4, 0, Math.PI * 2);
+    ctx.arc(19.5, -3.5, 1.4, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    // Naricita triangular/redonda
+    ctx.fillStyle = '#ff7eb9';
+    ctx.beginPath();
+    ctx.arc(9, -1, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Bigotes si es gato o conejo
+  if (charData.species === 'cat' || charData.species === 'rabbit') {
+    ctx.strokeStyle = '#555';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(12, -2); ctx.lineTo(20, -4);
+    ctx.moveTo(12, 1); ctx.lineTo(20, 2);
+    ctx.stroke();
+    ctx.lineWidth = 2.6;
+  }
+
+  // Ojos
+  const drawEye = (ex, ey) => {
+    ctx.fillStyle = '#fff';
+    ctx.strokeStyle = '#222';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.arc(ex, ey, 4.2, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#111';
+    ctx.beginPath();
+    ctx.arc(ex + 1.2, ey, 1.9, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  drawEye(-4, -6);
+  drawEye(5, -6);
+
+  // Gafas (Mamá, Papá, Pedro)
+  if (charData.id === 'mummy' || charData.id === 'daddy' || charData.id === 'pedro') {
+    ctx.strokeStyle = '#222';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(-4, -6, 5.5, 0, Math.PI * 2);
+    ctx.moveTo(1.5, -6);
+    ctx.lineTo(0, -6);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(5, -6, 5.5, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Mejilla sonrosada
+  ctx.fillStyle = 'rgba(255, 105, 165, 0.55)';
+  ctx.beginPath();
+  ctx.arc(-6, 3, 4.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Sonrisa
+  ctx.strokeStyle = '#d6336c';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  if (animState === 'happy' || animState === 'jump') {
+    ctx.arc(3, 5, 4.5, 0, Math.PI);
+    ctx.fillStyle = '#ff6b8b';
+    ctx.fill();
+  } else {
+    ctx.arc(3, 4, 4.5, 0.15, Math.PI - 0.15);
+  }
+  ctx.stroke();
+
+  // Accesorio equipado (Corona o Gorrito)
+  if (options.hat === 'hat_crown') {
+    ctx.fillStyle = '#ffd93d';
+    ctx.strokeStyle = '#b88400';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(-9, -15);
+    ctx.lineTo(-10, -25);
+    ctx.lineTo(-4, -20);
+    ctx.lineTo(0, -27);
+    ctx.lineTo(4, -20);
+    ctx.lineTo(10, -25);
+    ctx.lineTo(9, -15);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+  } else if (options.hat === 'hat_party') {
+    ctx.fillStyle = '#5cc8ff';
+    ctx.strokeStyle = '#176499';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(-7, -15);
+    ctx.lineTo(0, -31);
+    ctx.lineTo(7, -15);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#ffd93d';
+    ctx.beginPath();
+    ctx.arc(0, -32, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.restore();
+  ctx.restore();
+}
+
+// 6. GENERACIÓN DE ESCENARIO DE LOS 10 NIVELES
+function buildLevelState(level) {
+  const groundY = Math.max(360, H * 0.78);
+  const platforms = [];
+  const coins = [];
+  const stars = [];
+  const puddles = [];
+  const doors = [];
+  const particles = [];
+
+  // Generación determinista por nivel para variedad real
+  const seed = level.id * 97;
+  const rand = (n) => Math.abs(Math.sin(seed + n * 13.37));
+
+  // Casa de Peppa en Nivel 1 o estructuras temáticas
+  if (level.id === 1) {
+    // Estructura de la casa
+    platforms.push({ x: 650, y: groundY - 110, w: 320, h: 22, color: '#ffd166' });
+    platforms.push({ x: 1050, y: groundY - 190, w: 280, h: 22, color: '#ff8ec4' });
+    platforms.push({ x: 1450, y: groundY - 120, w: 260, h: 22, color: '#ffd166' });
+    doors.push({ x: 990, y: groundY - 90, w: 46, h: 90, open: false, color: '#f5b700' });
+  } else {
+    const platCount = 6 + Math.floor(level.id / 2);
+    for (let i = 0; i < platCount; i++) {
+      const px = 360 + i * ((level.width - 750) / platCount);
+      const py = groundY - 95 - (i % 3) * 65;
+      const pw = 150 + rand(i) * 80;
+      const colors = ['#ffb347', '#ff8ec4', '#5cc8ff', '#a29bfe', '#f6d365'];
+      platforms.push({
+        x: px,
+        y: py,
+        w: pw,
+        h: 22,
+        color: colors[(level.id + i) % colors.length],
+        isBridge: level.theme === 'forest' || level.theme === 'mountain'
+      });
+    }
+    // Puerta interactiva en niveles pares
+    if (level.id % 2 === 0) {
+      doors.push({ x: Math.floor(level.width * 0.55), y: groundY - 90, w: 46, h: 90, open: false, color: '#ff69b4' });
+    }
+  }
+
+  // Charcos de lodo interactivos
+  const puddleCount = level.id === 3 ? 7 : 3;
+  for (let i = 0; i < puddleCount; i++) {
+    const mx = 460 + i * ((level.width - 800) / puddleCount);
+    puddles.push({ x: mx, y: groundY + 4, w: 96, h: 18, jumped: false, splashTimer: 0 });
+  }
+
+  // Monedas distribuidas en arco y sobre plataformas
+  for (let i = 0; i < 16; i++) {
+    const cx = 280 + i * ((level.width - 500) / 16);
+    const cy = groundY - 45 - (i % 4) * 48;
+    coins.push({ x: cx, y: cy, collected: false, bob: i * 0.5 });
+  }
+
+  // 3 Estrellas por nivel
+  stars.push({ x: Math.floor(level.width * 0.32), y: groundY - 175, collected: false });
+  stars.push({ x: Math.floor(level.width * 0.62), y: groundY - 220, collected: false });
+  stars.push({ x: Math.floor(level.width * 0.86), y: groundY - 150, collected: false });
+
+  // Objeto coleccionable único del nivel
+  const collectibleItem = {
+    ...level.collectible,
+    x: Math.floor(level.width * 0.76),
+    y: groundY - 165,
+    collected: saveData.collectibles.includes(level.collectible.id)
+  };
+
+  // Nubes decorativas
+  const clouds = [];
+  for (let i = 0; i < 12; i++) {
+    clouds.push({
+      x: i * 320 + 80,
+      y: 55 + (i % 3) * 45,
+      scale: 0.7 + (i % 3) * 0.25,
+      speed: 12 + (i % 4) * 5
+    });
+  }
+
+  return {
+    level,
+    groundY,
+    camX: 0,
+    player: {
+      x: 110,
+      y: groundY,
+      vx: 0,
+      vy: 0,
+      w: 36,
+      h: 64,
+      grounded: true,
+      facing: 1,
+      anim: 'idle',
+      happyTimer: 0
+    },
+    platforms,
+    coins,
+    stars,
+    puddles,
+    doors,
+    collectibleItem,
+    clouds,
+    particles,
+    levelCoins: 0,
+    levelStars: 0,
+    puddlesJumped: 0,
+    riddleSolved: !level.riddle,
+    goalX: level.width - 150,
+    completed: false,
+    dialogueTimer: 0
+  };
+}
+
+// 7. ACTUALIZACIÓN Y RENDERIZADO DE NIVELES 2D
+function updateLevel(dt) {
+  const st = levelState;
+  if (!st || st.completed) return;
+
+  // Ajustar groundY dinámicamente si cambia orientación de pantalla
+  const newGroundY = Math.max(330, H * 0.78);
+  const deltaGround = newGroundY - st.groundY;
+  if (Math.abs(deltaGround) > 1) {
+    st.groundY = newGroundY;
+    st.player.y += deltaGround;
+    st.platforms.forEach(p => p.y += deltaGround);
+    st.coins.forEach(c => c.y += deltaGround);
+    st.stars.forEach(s => s.y += deltaGround);
+    st.puddles.forEach(m => m.y += deltaGround);
+    st.doors.forEach(d => d.y += deltaGround);
+    st.collectibleItem.y += deltaGround;
+  }
+
+  const charData = CHARACTERS.find(c => c.id === saveData.selectedChar) || CHARACTERS[0];
+  const p = st.player;
+
+  // Movimiento horizontal
+  const moveSpeed = charData.speed;
+  if (input.left) {
+    p.vx = -moveSpeed;
+    p.facing = -1;
+  } else if (input.right) {
+    p.vx = moveSpeed;
+    p.facing = 1;
+  } else {
+    p.vx *= 0.78;
+    if (Math.abs(p.vx) < 8) p.vx = 0;
+  }
+
+  // Salto
+  if (input.jumpJustPressed && p.grounded) {
+    p.vy = -charData.jump;
+    p.grounded = false;
+    sound.playJump();
+    spawnParticles(st.particles, p.x, p.y, '#ffffff', 6);
+  }
+
+  // Gravedad
+  p.vy += 1350 * dt;
+  const prevY = p.y;
+  p.x += p.vx * dt;
+  p.y += p.vy * dt;
+
+  // Límites del mundo
+  p.x = Math.max(35, Math.min(st.level.width - 50, p.x));
+
+  // Colisión con puertas cerradas
+  st.doors.forEach(door => {
+    if (!door.open) {
+      if (Math.abs(p.x - (door.x + door.w / 2)) < 36 && p.y > door.y + 10) {
+        if (p.x < door.x + door.w / 2) p.x = door.x - 16;
+        else p.x = door.x + door.w + 16;
+      }
+    }
+  });
+
+  // Colisión con plataformas (aterrizaje desde arriba)
+  p.grounded = false;
+  if (p.y >= st.groundY) {
+    p.y = st.groundY;
+    p.vy = 0;
+    p.grounded = true;
+  }
+
+  if (p.vy >= 0) {
+    for (const plat of st.platforms) {
+      if (p.x + 14 > plat.x && p.x - 14 < plat.x + plat.w) {
+        if (prevY <= plat.y + 10 && p.y >= plat.y) {
+          p.y = plat.y;
+          p.vy = 0;
+          p.grounded = true;
+          break;
+        }
+      }
+    }
+  }
+
+  // Animación del personaje
+  if (p.happyTimer > 0) {
+    p.happyTimer -= dt;
+    p.anim = 'happy';
+  } else if (!p.grounded) {
+    p.anim = 'jump';
+  } else if (Math.abs(p.vx) > 180) {
+    p.anim = 'run';
+  } else if (Math.abs(p.vx) > 15) {
+    p.anim = 'walk';
+  } else {
+    p.anim = 'idle';
+  }
+
+  // Estela de estrellas comprada en tienda
+  if (saveData.trailEnabled && Math.abs(p.vx) > 50 && Math.random() < 0.35) {
+    st.particles.push({
+      x: p.x - p.facing * 12,
+      y: p.y - 25 + (Math.random() - 0.5) * 20,
+      vx: -p.facing * 30,
+      vy: -20 - Math.random() * 20,
+      life: 0.55,
+      color: '#ffd93d',
+      size: 4
+    });
+  }
+
+  // Interacción con botón USAR (puertas, NPCs, acertijos)
+  if (input.actJustPressed) {
+    handleLevelInteraction();
+  }
+
+  // Proximidad automática con NPCs para mostrar globo de diálogo
+  let nearNpc = null;
+  for (const npc of st.level.npcs) {
+    if (Math.abs(p.x - npc.x) < 75) {
+      nearNpc = npc;
+      break;
+    }
+  }
+  const dlgBox = document.getElementById('dialogue-box');
+  if (nearNpc) {
+    const npcChar = CHARACTERS.find(c => c.id === nearNpc.charId) || CHARACTERS[0];
+    document.getElementById('dialogue-speaker').textContent = nearNpc.name;
+    document.getElementById('dialogue-text').textContent = nearNpc.text;
+    document.getElementById('dialogue-avatar').textContent = getSpeciesEmoji(npcChar.species);
+    dlgBox.classList.remove('hidden');
+  } else if (st.dialogueTimer <= 0) {
+    dlgBox.classList.add('hidden');
+  } else {
+    st.dialogueTimer -= dt;
+  }
+
+  // Charcos de lodo interactivos
+  st.puddles.forEach(mud => {
+    if (mud.splashTimer > 0) mud.splashTimer -= dt;
+    if (p.grounded && Math.abs(p.x - (mud.x + mud.w / 2)) < mud.w * 0.45 && Math.abs(p.y - st.groundY) < 8) {
+      if (input.jumpJustPressed || !mud.jumped) {
+        sound.playMud();
+        mud.splashTimer = 0.45;
+        p.happyTimer = 0.8;
+        spawnParticles(st.particles, mud.x + mud.w / 2, st.groundY - 4, '#7a4b2a', 14);
+        if (!mud.jumped) {
+          mud.jumped = true;
+          st.puddlesJumped++;
+          st.levelCoins += 3;
+          showToast('💦 ¡Splash en el lodo! +3 monedas');
+          updateLevelHud();
+        }
+      }
+    }
+  });
+
+  // Recolección de monedas
+  st.coins.forEach(c => {
+    if (!c.collected && Math.hypot(p.x - c.x, (p.y - 32) - c.y) < 38) {
+      c.collected = true;
+      st.levelCoins++;
+      sound.playCoin();
+      spawnParticles(st.particles, c.x, c.y, '#ffd93d', 8);
+      updateLevelHud();
+    }
+  });
+
+  // Recolección de estrellas
+  st.stars.forEach(s => {
+    if (!s.collected && Math.hypot(p.x - s.x, (p.y - 32) - s.y) < 42) {
+      s.collected = true;
+      st.levelStars++;
+      p.happyTimer = 0.9;
+      sound.playVictory();
+      spawnParticles(st.particles, s.x, s.y, '#ffe259', 15);
+      showToast(`⭐ ¡Estrella ${st.levelStars}/3 conseguida!`);
+      updateLevelHud();
+    }
+  });
+
+  // Recolección de objeto coleccionable único
+  const col = st.collectibleItem;
+  if (!col.collected && Math.hypot(p.x - col.x, (p.y - 32) - col.y) < 44) {
+    col.collected = true;
+    p.happyTimer = 1.1;
+    sound.playVictory();
+    spawnParticles(st.particles, col.x, col.y, '#ff7eb9', 18);
+    if (!saveData.collectibles.includes(col.id)) {
+      saveData.collectibles.push(col.id);
+      writeSave();
+    }
+    showToast(`${col.icon} ¡Encontraste: ${col.name}!`);
+  }
+
+  // Nubes animadas
+  st.clouds.forEach(cl => {
+    cl.x += cl.speed * dt;
+    if (cl.x > st.level.width + 200) cl.x = -200;
+  });
+
+  // Partículas
+  updateParticles(st.particles, dt);
+
+  // Cámara suave
+  const targetCamX = Math.max(0, Math.min(st.level.width - W, p.x - W * 0.38));
+  st.camX += (targetCamX - st.camX) * Math.min(1, dt * 8);
+
+  // Llegada a la meta
+  if (Math.abs(p.x - st.goalX) < 55 && p.grounded) {
+    if (!st.riddleSolved && st.level.riddle) {
+      openLevelRiddle(st.level.riddle);
+    } else if (st.level.mudGoal && st.puddlesJumped < st.level.mudGoal) {
+      showToast(`💦 ¡Salta en ${st.level.mudGoal - st.puddlesJumped} charcos más!`);
+      p.x = st.goalX - 75;
+    } else {
+      completeCurrentLevel();
+    }
+  }
+}
+
+function handleLevelInteraction() {
+  const st = levelState;
+  if (!st) return;
+  const p = st.player;
+
+  // Abrir puertas cercanas
+  for (const door of st.doors) {
+    if (!door.open && Math.abs(p.x - (door.x + door.w / 2)) < 75) {
+      door.open = true;
+      sound.playInteract();
+      spawnParticles(st.particles, door.x + 23, door.y + 45, '#ffd93d', 12);
+      showToast('🚪 ¡Puerta abierta!');
+      return;
+    }
+  }
+
+  // Acertijo si está cerca de la mitad o meta
+  if (!st.riddleSolved && st.level.riddle) {
+    openLevelRiddle(st.level.riddle);
+    return;
+  }
+
+  // Salto alegre al interactuar
+  sound.playInteract();
+  p.happyTimer = 0.7;
+}
+
+function openLevelRiddle(riddle) {
+  input.left = input.right = input.jump = false;
+  const overlay = document.getElementById('minigame-dom-overlay');
+  const box = document.getElementById('mg-dom-content');
+  overlay.classList.remove('hidden');
+
+  box.innerHTML = `
+    <h3 style="color:#ff5c9e; font-size:1.3rem;">🏫 Desafío de Pregunta</h3>
+    <p style="margin:12px 0; font-size:1.05rem; font-weight:700;">${riddle.question}</p>
+    <div class="quiz-options">
+      ${riddle.options.map((opt, idx) => `
+        <button class="btn btn-menu btn-blue" data-ans="${idx}">${opt}</button>
+      `).join('')}
+    </div>
+  `;
+
+  box.querySelectorAll('button').forEach(btn => {
+    btn.onclick = () => {
+      const idx = parseInt(btn.getAttribute('data-ans'), 10);
+      if (idx === riddle.answer) {
+        sound.playVictory();
+        levelState.riddleSolved = true;
+        levelState.levelCoins += 10;
+        updateLevelHud();
+        overlay.classList.add('hidden');
+        showToast('🎉 ¡Respuesta correcta! +10 monedas');
+      } else {
+        sound.playError();
+        btn.style.background = '#ff6b6b';
+        showToast('¡Inténtalo de nuevo!');
+      }
+    };
+  });
+}
+
+function completeCurrentLevel() {
+  const st = levelState;
+  st.completed = true;
+  sound.playVictory();
+
+  const earnedStars = Math.max(1, st.levelStars);
+  const bonusCoins = st.levelCoins + earnedStars * 10;
+
+  saveData.coins += bonusCoins;
+  const prevStars = saveData.levelStars[st.level.id] || 0;
+  if (earnedStars > prevStars) {
+    saveData.levelStars[st.level.id] = earnedStars;
+  }
+
+  let unlockMsg = '';
+  if (st.level.id >= saveData.unlockedLevel && st.level.id < LEVELS.length) {
+    saveData.unlockedLevel = st.level.id + 1;
+    unlockMsg = `🔓 ¡Nivel ${saveData.unlockedLevel}: ${LEVELS[saveData.unlockedLevel - 1].title} desbloqueado!`;
+  } else if (st.level.id === LEVELS.length) {
+    unlockMsg = '👑 ¡FELICIDADES! ¡Has completado toda la Gran Aventura!';
+  }
+
+  writeSave();
+
+  // Mostrar pantalla de victoria
+  hideGameplayUI();
+  gameMode = 'MENU';
+  document.getElementById('victory-title').textContent = `🎉 ¡${st.level.title} Completado!`;
+  document.getElementById('victory-stars').textContent = '⭐'.repeat(earnedStars) + '☆'.repeat(3 - earnedStars);
+  document.getElementById('victory-subtitle').textContent = st.level.id === 10
+    ? '¡Gran celebración con todos los amigos de Peppa Pig!'
+    : '¡Excelente exploración y saltos!';
+  document.getElementById('victory-coins').textContent = bonusCoins;
+  document.getElementById('victory-unlock-msg').textContent = unlockMsg;
+
+  const nextBtn = document.getElementById('btn-victory-next');
+  if (st.level.id < LEVELS.length) {
+    nextBtn.style.display = 'inline-flex';
+    nextBtn.textContent = `Nivel ${st.level.id + 1} ▶`;
+    nextBtn.onclick = () => {
+      hideAllScreens();
+      startLevel(st.level.id + 1);
+    };
+  } else {
+    nextBtn.style.display = 'none';
+  }
+
+  document.getElementById('btn-victory-replay').onclick = () => {
+    hideAllScreens();
+    startLevel(st.level.id);
+  };
+
+  document.getElementById('screen-victory').classList.remove('hidden');
+}
+
+function renderLevel() {
+  const st = levelState;
+  if (!st) return;
+
+  // Cielo degradado vibrante
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, st.groundY);
+  skyGrad.addColorStop(0, st.level.skyTop);
+  skyGrad.addColorStop(1, st.level.skyBottom);
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Sol sonriente
+  ctx.save();
+  ctx.translate(W - 85, 85);
+  ctx.fillStyle = '#ffd93d';
+  ctx.beginPath();
+  ctx.arc(0, 0, 36, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#ff9f1c';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.fillStyle = '#5c3800';
+  ctx.beginPath();
+  ctx.arc(-10, -5, 3, 0, Math.PI * 2);
+  ctx.arc(10, -5, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(0, 4, 10, 0.2, Math.PI - 0.2);
+  ctx.stroke();
+  ctx.restore();
+
+  // Parallax colinas lejanas estilo Peppa Pig
+  ctx.save();
+  const hillParallax = st.camX * 0.35;
+  for (let i = -1; i < 8; i++) {
+    const hx = i * 420 - (hillParallax % 420);
+    ctx.fillStyle = i % 2 === 0 ? '#8be876' : '#78db63';
+    ctx.strokeStyle = '#4eb83b';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(hx + 210, st.groundY + 60, 240, Math.PI, 0);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Cámara del mundo
+  ctx.save();
+  ctx.translate(-st.camX, 0);
+
+  // Nubes animadas
+  st.clouds.forEach(cl => {
+    drawCloud(ctx, cl.x, cl.y, cl.scale);
+  });
+
+  // Decoraciones de fondo temáticas (Casa amarilla de Peppa, árboles, flores)
+  drawThemeDecorations(ctx, st);
+
+  // Suelo verde con borde marcado
+  ctx.fillStyle = st.level.groundColor;
+  ctx.fillRect(0, st.groundY, st.level.width, H - st.groundY);
+  ctx.fillStyle = '#43a033';
+  ctx.fillRect(0, st.groundY, st.level.width, 10);
+
+  // Flores decorativas en el césped
+  for (let fx = 140; fx < st.level.width - 100; fx += 230) {
+    drawFlower(ctx, fx, st.groundY, fx % 460 === 0 ? '#ff69b4' : '#ffd93d');
+  }
+
+  // Charcos de lodo interactivos
+  st.puddles.forEach(mud => {
+    ctx.save();
+    ctx.translate(mud.x + mud.w / 2, mud.y);
+    const bounce = mud.splashTimer > 0 ? Math.sin(mud.splashTimer * 35) * 4 : 0;
+    ctx.fillStyle = '#7a4b2a';
+    ctx.strokeStyle = '#4e2e18';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, mud.w / 2 + bounce, mud.h / 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    // Brillo del lodo
+    ctx.fillStyle = 'rgba(255,255,255,0.22)';
+    ctx.beginPath();
+    ctx.ellipse(-12, -3, 18, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // Plataformas
+  st.platforms.forEach(plat => {
+    ctx.fillStyle = plat.color;
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 3;
+    roundRect(ctx, plat.x, plat.y, plat.w, plat.h, 10, true, true);
+    if (plat.isBridge) {
+      // Barandilla de puente de madera
+      ctx.strokeStyle = '#8d5524';
+      ctx.beginPath();
+      ctx.moveTo(plat.x + 8, plat.y);
+      ctx.lineTo(plat.x + 8, plat.y - 22);
+      ctx.lineTo(plat.x + plat.w - 8, plat.y - 22);
+      ctx.lineTo(plat.x + plat.w - 8, plat.y);
+      ctx.stroke();
+    }
+  });
+
+  // Puertas interactivas
+  st.doors.forEach(door => {
+    ctx.fillStyle = door.open ? 'rgba(255,255,255,0.35)' : door.color;
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 3;
+    roundRect(ctx, door.x, door.y, door.open ? 14 : door.w, door.h, 8, true, true);
+    if (!door.open) {
+      ctx.fillStyle = '#ffd93d';
+      ctx.beginPath();
+      ctx.arc(door.x + door.w - 10, door.y + door.h / 2, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px Fredoka, sans-serif';
+      ctx.fillText('USAR', door.x + 7, door.y - 8);
+    }
+  });
+
+  // Monedas
+  st.coins.forEach(c => {
+    if (c.collected) return;
+    const cy = c.y + Math.sin(globalTime * 5 + c.bob) * 5;
+    ctx.fillStyle = '#ffd93d';
+    ctx.strokeStyle = '#b88400';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(c.x, cy, 13, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#b88400';
+    ctx.font = 'bold 13px Fredoka, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('★', c.x, cy + 4.5);
+  });
+
+  // Estrellas
+  st.stars.forEach(s => {
+    if (s.collected) return;
+    const sy = s.y + Math.sin(globalTime * 4) * 6;
+    ctx.font = '32px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('⭐', s.x, sy + 10);
+  });
+
+  // Objeto coleccionable único
+  const col = st.collectibleItem;
+  if (!col.collected) {
+    const cy = col.y + Math.sin(globalTime * 4.5) * 7;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+    ctx.beginPath();
+    ctx.arc(col.x, cy, 24, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.font = '30px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(col.icon, col.x, cy + 10);
+  }
+
+  // NPCs en el escenario
+  st.level.npcs.forEach(npc => {
+    const npcChar = CHARACTERS.find(c => c.id === npc.charId) || CHARACTERS[0];
+    const facing = st.player.x < npc.x ? -1 : 1;
+    drawCharacter(ctx, npcChar, npc.x, st.groundY, 'idle', facing, globalTime);
+  });
+
+  // Meta del nivel (Bandera / Arco de celebración)
+  drawGoalArch(ctx, st.goalX, st.groundY, st.level.id === 10);
+
+  // Personaje del jugador
+  const playerChar = CHARACTERS.find(c => c.id === saveData.selectedChar) || CHARACTERS[0];
+  drawCharacter(ctx, playerChar, st.player.x, st.player.y, st.player.anim, st.player.facing, globalTime, {
+    hat: saveData.equippedHat
+  });
+
+  // Partículas
+  renderParticles(ctx, st.particles);
+
+  ctx.restore();
+}
+
+// Helpers gráficos del escenario
+function drawCloud(ctx, x, y, scale) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.beginPath();
+  ctx.arc(0, 0, 24, 0, Math.PI * 2);
+  ctx.arc(24, -6, 28, 0, Math.PI * 2);
+  ctx.arc(52, 0, 22, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawFlower(ctx, x, y, petalColor) {
+  ctx.strokeStyle = '#2d821f';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x, y - 16);
+  ctx.stroke();
+  ctx.fillStyle = petalColor;
+  for (let a = 0; a < 5; a++) {
+    const ang = (a * Math.PI * 2) / 5;
+    ctx.beginPath();
+    ctx.arc(x + Math.cos(ang) * 5, y - 18 + Math.sin(ang) * 5, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(x, y - 18, 3, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawThemeDecorations(ctx, st) {
+  // Casa amarilla icónica de Peppa Pig al inicio de los niveles
+  ctx.save();
+  ctx.translate(160, st.groundY);
+  ctx.fillStyle = '#ffe066';
+  ctx.strokeStyle = '#d99b00';
+  ctx.lineWidth = 4;
+  roundRect(ctx, -70, -135, 140, 135, 8, true, true);
+  // Tejado rojo
+  ctx.fillStyle = '#ff595e';
+  ctx.strokeStyle = '#b5171c';
+  ctx.beginPath();
+  ctx.moveTo(-82, -135);
+  ctx.lineTo(0, -195);
+  ctx.lineTo(82, -135);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  // Puerta roja y ventanas
+  ctx.fillStyle = '#ff595e';
+  roundRect(ctx, -18, -55, 36, 55, 6, true, true);
+  ctx.fillStyle = '#90e0ef';
+  ctx.fillRect(-52, -110, 28, 28);
+  ctx.fillRect(24, -110, 28, 28);
+  ctx.restore();
+
+  // Árboles estilizados a lo largo del nivel
+  for (let tx = 550; tx < st.level.width - 250; tx += 520) {
+    ctx.save();
+    ctx.translate(tx, st.groundY);
+    ctx.fillStyle = '#8d5524';
+    ctx.fillRect(-10, -85, 20, 85);
+    ctx.fillStyle = '#48b835';
+    ctx.strokeStyle = '#2d821f';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, -105, 42, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawGoalArch(ctx, x, y, isFinale) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.fillStyle = '#ff5c9e';
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 4;
+  ctx.fillRect(-45, -135, 14, 135);
+  ctx.fillRect(31, -135, 14, 135);
+  roundRect(ctx, -55, -165, 110, 36, 14, true, true);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 16px Fredoka, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(isFinale ? '👑 META FINAL' : '🏁 META', 0, -142);
+  ctx.restore();
+}
+
+function roundRect(ctx, x, y, w, h, r, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+  if (fill) ctx.fill();
+  if (stroke) ctx.stroke();
+}
+
+function spawnParticles(list, x, y, color, count) {
+  for (let i = 0; i < count; i++) {
+    const ang = Math.random() * Math.PI * 2;
+    const spd = 60 + Math.random() * 140;
+    list.push({
+      x, y: y - 10,
+      vx: Math.cos(ang) * spd,
+      vy: Math.sin(ang) * spd - 60,
+      life: 0.45 + Math.random() * 0.3,
+      color,
+      size: 4 + Math.random() * 4
+    });
+  }
+}
+
+function updateParticles(list, dt) {
+  for (let i = list.length - 1; i >= 0; i--) {
+    const pt = list[i];
+    pt.x += pt.vx * dt;
+    pt.y += pt.vy * dt;
+    pt.vy += 300 * dt;
+    pt.life -= dt;
+    if (pt.life <= 0) list.splice(i, 1);
+  }
+}
+
+function renderParticles(ctx, list) {
+  list.forEach(pt => {
+    ctx.globalAlpha = Math.max(0, pt.life * 1.5);
+    ctx.fillStyle = pt.color;
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+}
+
+// 8. LOS 10 MINIJUEGOS COMPLETAMENTE JUGABLES
+function launchMinigame(mgId) {
+  const mg = MINIGAMES.find(m => m.id === mgId);
+  if (!mg) return;
+  hideAllScreens();
+  sound.startMusic();
+
+  if (mg.type.startsWith('dom_')) {
+    launchDomMinigame(mg);
+  } else {
+    launchCanvasMinigame(mg);
+  }
+}
+
+// 8A. MINIJUEGOS EN CANVAS (1: Charcos, 3: Carrera, 6: Atrapar Estrellas, 9: Castillo Arena, 10: Salto Nubes)
+function launchCanvasMinigame(mg) {
+  gameMode = 'MINIGAME_CANVAS';
+  showGameplayUI(mg.title, mg.desc, mg.type !== 'canvas_tower');
+
+  const gY = Math.max(330, H * 0.78);
+  mgCanvasState = {
+    mg,
+    score: 0,
+    timer: 25,
+    groundY: gY,
+    player: { x: W * 0.25, y: gY, vy: 0, grounded: true, facing: 1, anim: 'run' },
+    items: [],
+    rivals: [],
+    blocks: [],
+    currentBlock: null,
+    camY: 0,
+    spawnTimer: 0,
+    onTap: null
+  };
+
+  if (mg.type === 'canvas_race') {
+    mgCanvasState.player.x = 70;
+    mgCanvasState.rivals = [
+      { charId: 'suzy', x: 70, speed: 125 },
+      { charId: 'danny', x: 70, speed: 138 }
+    ];
+    mgCanvasState.finishX = Math.max(1200, W * 2.4);
+  } else if (mg.type === 'canvas_catch') {
+    mgCanvasState.player.x = W / 2;
+  } else if (mg.type === 'canvas_tower') {
+    mgCanvasState.blocks = [{ x: W / 2 - 70, y: gY - 26, w: 140, h: 26, color: '#f6d365' }];
+    mgCanvasState.currentBlock = { x: 40, y: gY - 52, w: 140, h: 26, dir: 1, speed: 240 };
+    mgCanvasState.onTap = () => {
+      const st = mgCanvasState;
+      const top = st.blocks[st.blocks.length - 1];
+      const cur = st.currentBlock;
+      const overlapLeft = Math.max(top.x, cur.x);
+      const overlapRight = Math.min(top.x + top.w, cur.x + cur.w);
+      const overlapW = overlapRight - overlapLeft;
+      if (overlapW > 14) {
+        sound.playCoin();
+        st.score += 10;
+        st.blocks.push({ x: overlapLeft, y: cur.y, w: overlapW, h: 26, color: '#f3c64f' });
+        st.currentBlock = {
+          x: 30,
+          y: cur.y - 26,
+          w: overlapW,
+          h: 26,
+          dir: 1,
+          speed: Math.min(480, cur.speed + 18)
+        };
+        if (st.blocks.length > 6) st.camY += 26;
+      } else {
+        sound.playError();
+        finishMinigame(mg, st.score);
+      }
+    };
+  } else if (mg.type === 'canvas_jumper') {
+    mgCanvasState.player.x = W / 2;
+    mgCanvasState.player.y = gY - 30;
+    mgCanvasState.player.vy = -580;
+    mgCanvasState.player.grounded = false;
+    for (let i = 0; i < 12; i++) {
+      mgCanvasState.items.push({
+        x: 60 + Math.random() * (W - 120),
+        y: gY - i * 85,
+        w: 95
+      });
+    }
+  }
+}
+
+function updateCanvasMinigame(dt) {
+  const st = mgCanvasState;
+  if (!st) return;
+  const charData = CHARACTERS.find(c => c.id === saveData.selectedChar) || CHARACTERS[0];
+  const p = st.player;
+
+  if (st.mg.type === 'canvas_puddles') {
+    st.timer -= dt;
+    if (st.timer <= 0) return finishMinigame(st.mg, st.score);
+
+    if (input.jumpJustPressed && p.grounded) {
+      p.vy = -560;
+      p.grounded = false;
+      sound.playJump();
+    }
+    p.vy += 1350 * dt;
+    p.y += p.vy * dt;
+    if (p.y >= st.groundY) { p.y = st.groundY; p.vy = 0; p.grounded = true; }
+    p.anim = p.grounded ? 'run' : 'jump';
+
+    st.spawnTimer -= dt;
+    if (st.spawnTimer <= 0) {
+      st.items.push({ x: W + 60, y: st.groundY + 4, w: 85, jumped: false });
+      st.spawnTimer = 1.15 + Math.random() * 0.7;
+    }
+
+    for (let i = st.items.length - 1; i >= 0; i--) {
+      const m = st.items[i];
+      m.x -= 280 * dt;
+      if (!m.jumped && Math.abs(p.x - m.x) < 42 && p.y >= st.groundY - 12) {
+        m.jumped = true;
+        st.score += 10;
+        sound.playMud();
+        showToast('💦 +10 pts');
+      }
+      if (m.x < -100) st.items.splice(i, 1);
+    }
+  } else if (st.mg.type === 'canvas_race') {
+    // Tocar rápido derecha o saltar para correr más rápido
+    if (input.right || input.actJustPressed) {
+      p.x += 235 * dt;
+    } else {
+      p.x += 115 * dt;
+    }
+    if (input.jumpJustPressed && p.grounded) {
+      p.vy = -520;
+      p.grounded = false;
+      sound.playJump();
+    }
+    p.vy += 1350 * dt;
+    p.y += p.vy * dt;
+    if (p.y >= st.groundY) { p.y = st.groundY; p.vy = 0; p.grounded = true; }
+    p.anim = 'run';
+
+    st.rivals.forEach(r => { r.x += r.speed * dt; });
+    st.score = Math.floor((p.x / st.finishX) * 100);
+
+    if (p.x >= st.finishX) {
+      const won = st.rivals.every(r => p.x >= r.x);
+      return finishMinigame(st.mg, won ? 100 : 50, won ? '🏆 ¡Llegaste en 1er lugar!' : '🥈 ¡Buena carrera!');
+    }
+  } else if (st.mg.type === 'canvas_catch') {
+    st.timer -= dt;
+    if (st.timer <= 0) return finishMinigame(st.mg, st.score);
+
+    if (input.left) { p.x -= 360 * dt; p.facing = -1; p.anim = 'run'; }
+    else if (input.right) { p.x += 360 * dt; p.facing = 1; p.anim = 'run'; }
+    else { p.anim = 'idle'; }
+    p.x = Math.max(35, Math.min(W - 35, p.x));
+
+    st.spawnTimer -= dt;
+    if (st.spawnTimer <= 0) {
+      st.items.push({
+        x: 35 + Math.random() * (W - 70),
+        y: -20,
+        vy: 190 + Math.random() * 140,
+        bad: Math.random() < 0.25
+      });
+      st.spawnTimer = 0.55;
+    }
+
+    for (let i = st.items.length - 1; i >= 0; i--) {
+      const it = st.items[i];
+      it.y += it.vy * dt;
+      if (Math.hypot(p.x - it.x, (p.y - 35) - it.y) < 42) {
+        if (it.bad) {
+          sound.playError();
+          st.score = Math.max(0, st.score - 5);
+        } else {
+          sound.playCoin();
+          st.score += 10;
+        }
+        st.items.splice(i, 1);
+        continue;
+      }
+      if (it.y > H + 30) st.items.splice(i, 1);
+    }
+  } else if (st.mg.type === 'canvas_tower') {
+    if (input.jumpJustPressed || input.actJustPressed) {
+      st.onTap();
+    }
+    const cur = st.currentBlock;
+    if (cur) {
+      cur.x += cur.dir * cur.speed * dt;
+      if (cur.x + cur.w > W - 25) { cur.x = W - 25 - cur.w; cur.dir = -1; }
+      if (cur.x < 25) { cur.x = 25; cur.dir = 1; }
+    }
+  } else if (st.mg.type === 'canvas_jumper') {
+    if (input.left) { p.x -= 340 * dt; p.facing = -1; }
+    if (input.right) { p.x += 340 * dt; p.facing = 1; }
+    if (p.x < 0) p.x = W;
+    if (p.x > W) p.x = 0;
+
+    const prevY = p.y;
+    p.vy += 1100 * dt;
+    p.y += p.vy * dt;
+    p.anim = 'jump';
+
+    if (p.vy > 0) {
+      for (const cl of st.items) {
+        if (p.x + 16 > cl.x - cl.w / 2 && p.x - 16 < cl.x + cl.w / 2) {
+          if (prevY <= cl.y + 8 && p.y >= cl.y - 6) {
+            p.vy = -590;
+            sound.playJump();
+            st.score += 5;
+          }
+        }
+      }
+    }
+
+    if (p.y < H * 0.4) {
+      const diff = H * 0.4 - p.y;
+      p.y = H * 0.4;
+      st.items.forEach(cl => {
+        cl.y += diff;
+        if (cl.y > H + 20) {
+          cl.y = -20;
+          cl.x = 55 + Math.random() * (W - 110);
+        }
+      });
+    }
+
+    if (p.y > H + 50) {
+      return finishMinigame(st.mg, st.score);
+    }
+  }
+
+  document.getElementById('hud-coins').textContent = st.score;
+  document.getElementById('hud-stars').textContent = st.mg.type === 'canvas_tower' || st.mg.type === 'canvas_jumper' || st.mg.type === 'canvas_race'
+    ? '∞'
+    : `${Math.max(0, Math.ceil(st.timer))}s`;
+}
+
+function renderCanvasMinigame() {
+  const st = mgCanvasState;
+  if (!st) return;
+  const charData = CHARACTERS.find(c => c.id === saveData.selectedChar) || CHARACTERS[0];
+
+  ctx.fillStyle = '#6ec6ff';
+  ctx.fillRect(0, 0, W, H);
+  drawCloud(ctx, (globalTime * 20) % (W + 150) - 50, 90, 1);
+  drawCloud(ctx, ((globalTime * 15) + 220) % (W + 150) - 50, 150, 0.8);
+
+  if (st.mg.type === 'canvas_puddles') {
+    ctx.fillStyle = '#68d354';
+    ctx.fillRect(0, st.groundY, W, H - st.groundY);
+    st.items.forEach(m => {
+      ctx.fillStyle = '#7a4b2a';
+      ctx.beginPath();
+      ctx.ellipse(m.x, m.y, m.w / 2, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    drawCharacter(ctx, charData, st.player.x, st.player.y, st.player.anim, 1, globalTime);
+  } else if (st.mg.type === 'canvas_race') {
+    const cam = Math.max(0, st.player.x - W * 0.3);
+    ctx.save();
+    ctx.translate(-cam, 0);
+    ctx.fillStyle = '#68d354';
+    ctx.fillRect(0, st.groundY, st.finishX + 300, H - st.groundY);
+    drawGoalArch(ctx, st.finishX, st.groundY, false);
+    st.rivals.forEach(r => {
+      const rc = CHARACTERS.find(c => c.id === r.charId);
+      drawCharacter(ctx, rc, r.x, st.groundY, 'run', 1, globalTime);
+    });
+    drawCharacter(ctx, charData, st.player.x, st.player.y, st.player.anim, 1, globalTime);
+    ctx.restore();
+  } else if (st.mg.type === 'canvas_catch') {
+    ctx.fillStyle = '#68d354';
+    ctx.fillRect(0, st.groundY, W, H - st.groundY);
+    st.items.forEach(it => {
+      ctx.font = '32px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(it.bad ? '⛈️' : '🌟', it.x, it.y);
+    });
+    drawCharacter(ctx, charData, st.player.x, st.player.y, st.player.anim, st.player.facing, globalTime);
+  } else if (st.mg.type === 'canvas_tower') {
+    ctx.fillStyle = '#f6d365';
+    ctx.fillRect(0, st.groundY, W, H - st.groundY);
+    ctx.save();
+    ctx.translate(0, st.camY);
+    st.blocks.forEach(b => {
+      ctx.fillStyle = b.color;
+      ctx.strokeStyle = '#b88400';
+      ctx.lineWidth = 3;
+      roundRect(ctx, b.x, b.y, b.w, b.h, 6, true, true);
+    });
+    if (st.currentBlock) {
+      const c = st.currentBlock;
+      ctx.fillStyle = '#ff9f43';
+      ctx.strokeStyle = '#b88400';
+      roundRect(ctx, c.x, c.y, c.w, c.h, 6, true, true);
+    }
+    ctx.restore();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 18px Fredoka, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('¡Toca la pantalla o SALTAR para apilar!', W / 2, 115);
+  } else if (st.mg.type === 'canvas_jumper') {
+    st.items.forEach(cl => {
+      drawCloud(ctx, cl.x - 24, cl.y, 0.75);
+    });
+    drawCharacter(ctx, charData, st.player.x, st.player.y, 'jump', st.player.facing, globalTime);
+  }
+}
+
+// 8B. MINIJUEGOS DE INTERFAZ INTERACTIVA (2: Objetos Ocultos, 4: Puzzle, 5: Memorama, 7: Colores, 8: Trivia)
+function launchDomMinigame(mg) {
+  const overlay = document.getElementById('minigame-dom-overlay');
+  const box = document.getElementById('mg-dom-content');
+  overlay.classList.remove('hidden');
+
+  if (mg.type === 'dom_hidden') {
+    const targets = [
+      { id: 0, icon: '🧸', name: 'Osito', x: 18, y: 28, found: false },
+      { id: 1, icon: '🦖', name: 'Dinosaurio', x: 74, y: 34, found: false },
+      { id: 2, icon: '⚽', name: 'Pelota', x: 45, y: 72, found: false },
+      { id: 3, icon: '🍎', name: 'Manzana', x: 82, y: 75, found: false },
+      { id: 4, icon: '👑', name: 'Corona', x: 26, y: 68, found: false },
+      { id: 5, icon: '🎈', name: 'Globo', x: 54, y: 22, found: false }
+    ];
+    let foundCount = 0;
+
+    const renderHidden = () => {
+      box.innerHTML = `
+        <h3 style="color:#ff5c9e;">🔍 Objetos Escondidos (${foundCount}/6)</h3>
+        <p style="font-size:0.85rem; margin-bottom:8px;">Toca los 6 objetos escondidos en el jardín de Peppa:</p>
+        <div style="position:relative; width:100%; height:250px; background:linear-gradient(#74b9ff 55%, #68d354 55%); border-radius:18px; border:4px solid #fff; overflow:hidden;">
+          <div style="position:absolute; left:10%; top:20%; font-size:3.2rem; pointer-events:none;">🌳</div>
+          <div style="position:absolute; right:12%; top:22%; font-size:3.2rem; pointer-events:none;">🏡</div>
+          <div style="position:absolute; left:40%; bottom:12%; font-size:2.8rem; pointer-events:none;">🌻</div>
+          ${targets.map(t => t.found ? '' : `
+            <button data-tid="${t.id}" style="position:absolute; left:${t.x}%; top:${t.y}%; font-size:1.65rem; background:none; border:none; cursor:pointer; opacity:0.86;">${t.icon}</button>
+          `).join('')}
+        </div>
+        <div style="margin-top:8px; font-size:1.1rem;">
+          ${targets.map(t => `<span style="opacity:${t.found ? 0.3 : 1}; margin:0 4px;">${t.icon}</span>`).join('')}
+        </div>
+        <button class="btn btn-sm btn-red" style="margin-top:10px; width:auto;" id="mg-close-btn">Salir</button>
+      `;
+      box.querySelectorAll('[data-tid]').forEach(btn => {
+        btn.onclick = () => {
+          const id = parseInt(btn.getAttribute('data-tid'), 10);
+          targets[id].found = true;
+          foundCount++;
+          sound.playCoin();
+          if (foundCount >= targets.length) {
+            overlay.classList.add('hidden');
+            finishMinigame(mg, 60, '🔍 ¡Encontraste todos los objetos!');
+          } else {
+            renderHidden();
+          }
+        };
+      });
+      document.getElementById('mg-close-btn').onclick = () => { overlay.classList.add('hidden'); openHomeScreen(); };
+    };
+    renderHidden();
+  } else if (mg.type === 'dom_puzzle') {
+    const pieces = [
+      { n: 1, icon: '🐷', bg: '#ffb3d1' },
+      { n: 2, icon: '👑', bg: '#ffd93d' },
+      { n: 3, icon: '🦖', bg: '#7be866' },
+      { n: 4, icon: '🏡', bg: '#ff8ec4' },
+      { n: 5, icon: '🌞', bg: '#ffe259' },
+      { n: 6, icon: '💦', bg: '#a29bfe' },
+      { n: 7, icon: '🍎', bg: '#ff7675' },
+      { n: 8, icon: '🎈', bg: '#74b9ff' },
+      { n: 0, icon: '', bg: '' }
+    ];
+    // Mezclar con movimientos válidos para garantizar solución
+    let board = [...pieces];
+    for (let s = 0; s < 35; s++) {
+      const z = board.findIndex(p => p.n === 0);
+      const neighbors = [];
+      if (z % 3 > 0) neighbors.push(z - 1);
+      if (z % 3 < 2) neighbors.push(z + 1);
+      if (z >= 3) neighbors.push(z - 3);
+      if (z < 6) neighbors.push(z + 3);
+      const pick = neighbors[Math.floor(Math.random() * neighbors.length)];
+      [board[z], board[pick]] = [board[pick], board[z]];
+    }
+
+    const renderPuzzle = () => {
+      box.innerHTML = `
+        <h3 style="color:#ff5c9e;">🧩 Rompecabezas 3x3</h3>
+        <p style="font-size:0.85rem;">Ordena los números del 1 al 8 tocando una pieza junto al hueco:</p>
+        <div class="puzzle-grid">
+          ${board.map((p, idx) => p.n === 0
+            ? `<div class="puzzle-piece empty"></div>`
+            : `<button class="puzzle-piece" data-idx="${idx}" style="background:${p.bg};">
+                <span>${p.icon}</span>
+                <span style="font-size:0.9rem;">${p.n}</span>
+              </button>`
+          ).join('')}
+        </div>
+        <button class="btn btn-sm btn-red" style="width:auto;" id="mg-close-btn">Salir</button>
+      `;
+      box.querySelectorAll('[data-idx]').forEach(btn => {
+        btn.onclick = () => {
+          const idx = parseInt(btn.getAttribute('data-idx'), 10);
+          const z = board.findIndex(p => p.n === 0);
+          const valid = (Math.abs(idx - z) === 1 && Math.floor(idx / 3) === Math.floor(z / 3)) || Math.abs(idx - z) === 3;
+          if (valid) {
+            sound.playInteract();
+            [board[z], board[idx]] = [board[idx], board[z]];
+            const solved = board.slice(0, 8).every((p, i) => p.n === i + 1);
+            if (solved) {
+              overlay.classList.add('hidden');
+              finishMinigame(mg, 80, '🧩 ¡Rompecabezas completado!');
+            } else {
+              renderPuzzle();
+            }
+          }
+        };
+      });
+      document.getElementById('mg-close-btn').onclick = () => { overlay.classList.add('hidden'); openHomeScreen(); };
+    };
+    renderPuzzle();
+  } else if (mg.type === 'dom_memory') {
+    const icons = ['🐷', '🦖', '👑', '🍎', '🎈', '⚽'];
+    let deck = [...icons, ...icons]
+      .sort(() => Math.random() - 0.5)
+      .map((icon, idx) => ({ idx, icon, flipped: false, matched: false }));
+    let openCards = [];
+    let lock = false;
+
+    const renderMem = () => {
+      box.innerHTML = `
+        <h3 style="color:#ff5c9e;">🃏 Memorama de Peppa</h3>
+        <p style="font-size:0.85rem;">Encuentra las 6 parejas iguales:</p>
+        <div class="memory-grid">
+          ${deck.map(c => `
+            <button class="memory-tile ${c.flipped || c.matched ? 'flipped' : ''}" data-mid="${c.idx}">
+              ${c.flipped || c.matched ? c.icon : '?'}
+            </button>
+          `).join('')}
+        </div>
+        <button class="btn btn-sm btn-red" style="width:auto;" id="mg-close-btn">Salir</button>
+      `;
+      box.querySelectorAll('[data-mid]').forEach(btn => {
+        btn.onclick = () => {
+          if (lock) return;
+          const id = parseInt(btn.getAttribute('data-mid'), 10);
+          const card = deck[id];
+          if (card.flipped || card.matched) return;
+          sound.playInteract();
+          card.flipped = true;
+          openCards.push(card);
+          renderMem();
+
+          if (openCards.length === 2) {
+            lock = true;
+            const [a, b] = openCards;
+            if (a.icon === b.icon) {
+              sound.playCoin();
+              a.matched = b.matched = true;
+              openCards = [];
+              lock = false;
+              if (deck.every(c => c.matched)) {
+                setTimeout(() => {
+                  overlay.classList.add('hidden');
+                  finishMinigame(mg, 70, '🃏 ¡Todas las parejas encontradas!');
+                }, 350);
+              } else {
+                renderMem();
+              }
+            } else {
+              setTimeout(() => {
+                a.flipped = b.flipped = false;
+                openCards = [];
+                lock = false;
+                renderMem();
+              }, 650);
+            }
+          }
+        };
+      });
+      document.getElementById('mg-close-btn').onclick = () => { overlay.classList.add('hidden'); openHomeScreen(); };
+    };
+    renderMem();
+  } else if (mg.type === 'dom_colors') {
+    const items = [
+      { icon: '🍎', name: 'Manzana', color: 'red' },
+      { icon: '🐳', name: 'Ballena', color: 'blue' },
+      { icon: '🍌', name: 'Banana', color: 'yellow' },
+      { icon: '🐸', name: 'Ranita', color: 'green' },
+      { icon: '🍓', name: 'Fresa', color: 'red' },
+      { icon: '🚙', name: 'Auto Azul', color: 'blue' },
+      { icon: '🌞', name: 'Sol', color: 'yellow' },
+      { icon: '🦖', name: 'Dinosaurio', color: 'green' }
+    ].sort(() => Math.random() - 0.5);
+    let idx = 0;
+    let score = 0;
+
+    const renderColors = () => {
+      const cur = items[idx];
+      box.innerHTML = `
+        <h3 style="color:#ff5c9e;">🎨 Clasificar por Colores (${idx + 1}/${items.length})</h3>
+        <div style="font-size:4rem; margin:12px 0;">${cur.icon}</div>
+        <p style="font-weight:700; margin-bottom:12px;">¿En qué cesta va: ${cur.name}?</p>
+        <div class="quiz-options">
+          <button class="btn btn-menu btn-red" data-col="red">🧺 Cesta Roja</button>
+          <button class="btn btn-menu btn-blue" data-col="blue">🧺 Cesta Azul</button>
+          <button class="btn btn-menu btn-yellow" data-col="yellow">🧺 Cesta Amarilla</button>
+          <button class="btn btn-play" style="margin:0; padding:10px; font-size:1rem;" data-col="green">🧺 Cesta Verde</button>
+        </div>
+      `;
+      box.querySelectorAll('[data-col]').forEach(btn => {
+        btn.onclick = () => {
+          if (btn.getAttribute('data-col') === cur.color) {
+            sound.playCoin();
+            score += 10;
+          } else {
+            sound.playError();
+          }
+          idx++;
+          if (idx >= items.length) {
+            overlay.classList.add('hidden');
+            finishMinigame(mg, score, `🎨 ¡Clasificaste los colores!`);
+          } else {
+            renderColors();
+          }
+        };
+      });
+    };
+    renderColors();
+  } else if (mg.type === 'dom_trivia') {
+    const questions = [
+      { q: '¿Cómo se llama el hermano pequeño de Peppa?', opts: ['George', 'Pedro', 'Danny', 'Richard'], a: 0 },
+      { q: '¿Cuál es el juguete favorito de George?', opts: ['Un tren', 'Un dinosaurio', 'Una muñeca', 'Un tambor'], a: 1 },
+      { q: '¿Qué animal es Suzy?', opts: ['Gata', 'Coneja', 'Oveja', 'Pony'], a: 2 },
+      { q: '¿Cuántas patas tiene una araña simpática?', opts: ['2', '4', '8', '10'], a: 2 },
+      { q: '¿Qué usan Peppa y George para saltar en el lodo?', opts: ['Patines', 'Botas', 'Aletas', 'Esquíes'], a: 1 }
+    ];
+    let qIdx = 0;
+    let score = 0;
+
+    const renderTrivia = () => {
+      const q = questions[qIdx];
+      box.innerHTML = `
+        <h3 style="color:#ff5c9e;">❓ Pregunta ${qIdx + 1} de ${questions.length}</h3>
+        <p style="font-size:1.1rem; font-weight:700; margin:14px 0;">${q.q}</p>
+        <div class="quiz-options">
+          ${q.opts.map((o, i) => `<button class="btn btn-menu btn-blue" data-qi="${i}">${o}</button>`).join('')}
+        </div>
+      `;
+      box.querySelectorAll('[data-qi]').forEach(btn => {
+        btn.onclick = () => {
+          if (parseInt(btn.getAttribute('data-qi'), 10) === q.a) {
+            sound.playCoin();
+            score += 15;
+          } else {
+            sound.playError();
+          }
+          qIdx++;
+          if (qIdx >= questions.length) {
+            overlay.classList.add('hidden');
+            finishMinigame(mg, score, '❓ ¡Trivia Infantil completada!');
+          } else {
+            renderTrivia();
+          }
+        };
+      });
+    };
+    renderTrivia();
+  }
+}
+
+function finishMinigame(mg, score, customMsg = '') {
+  sound.playVictory();
+  hideGameplayUI();
+  gameMode = 'MENU';
+
+  const coinsEarned = Math.max(5, Math.floor(score / 3));
+  saveData.coins += coinsEarned;
+  const prevBest = saveData.minigameBest[mg.id] || 0;
+  if (score > prevBest) saveData.minigameBest[mg.id] = score;
+  writeSave();
+
+  document.getElementById('victory-title').textContent = `🎮 ${mg.title}`;
+  document.getElementById('victory-stars').textContent = score >= 60 ? '⭐⭐⭐' : score >= 30 ? '⭐⭐☆' : '⭐☆☆';
+  document.getElementById('victory-subtitle').textContent = customMsg || `¡Puntuación obtenida: ${score} pts!`;
+  document.getElementById('victory-coins').textContent = coinsEarned;
+  document.getElementById('victory-unlock-msg').textContent = `🏆 Récord personal: ${saveData.minigameBest[mg.id]} pts`;
+
+  const nextBtn = document.getElementById('btn-victory-next');
+  nextBtn.style.display = 'inline-flex';
+  nextBtn.textContent = '🎮 Más Minijuegos';
+  nextBtn.onclick = () => {
+    hideAllScreens();
+    renderMinigamesGrid();
+    document.getElementById('screen-minigames').classList.remove('hidden');
+  };
+
+  document.getElementById('btn-victory-replay').onclick = () => {
+    hideAllScreens();
+    launchMinigame(mg.id);
+  };
+
+  document.getElementById('screen-victory').classList.remove('hidden');
+}
+
+// 9. RENDERIZADO DE MENÚS Y PANTALLAS DE UI
+function updateHomeStats() {
+  const curChar = CHARACTERS.find(c => c.id === saveData.selectedChar) || CHARACTERS[0];
+  document.getElementById('home-char-name').textContent = curChar.name;
+  document.getElementById('home-coins').textContent = saveData.coins;
+  document.getElementById('shop-coins').textContent = saveData.coins;
+
+  const totalStars = Object.values(saveData.levelStars).reduce((a, b) => a + b, 0);
+  document.getElementById('home-stars').textContent = `${totalStars}/30`;
+
+  const pct = Math.min(100, Math.round(((saveData.unlockedLevel - 1) / 10) * 60 + (totalStars / 30) * 40));
+  document.getElementById('home-progress').textContent = `${pct}%`;
+}
+
+function createCharPreviewCanvas(charData) {
+  const c = document.createElement('canvas');
+  c.width = 96;
+  c.height = 96;
+  const cctx = c.getContext('2d');
+  drawCharacter(cctx, charData, 48, 86, 'idle', 1, 0.5, { extraScale: 0.95 });
+  return c;
+}
+
+function renderCharactersGrid() {
+  const grid = document.getElementById('characters-grid');
+  grid.innerHTML = '';
+  CHARACTERS.forEach(ch => {
+    const unlocked = saveData.unlockedChars.includes(ch.id);
+    const selected = saveData.selectedChar === ch.id;
+    const card = document.createElement('div');
+    card.className = `card ${selected ? 'selected' : ''} ${!unlocked ? 'locked' : ''}`;
+
+    const preview = createCharPreviewCanvas(ch);
+    card.appendChild(preview);
+
+    const info = document.createElement('div');
+    info.innerHTML = `
+      <div class="card-title">${ch.name}</div>
+      <div class="card-desc">${ch.desc}</div>
+    `;
+    card.appendChild(info);
+
+    const btn = document.createElement('button');
+    if (selected) {
+      btn.className = 'btn btn-sm btn-play';
+      btn.style.margin = '0';
+      btn.textContent = '✔ Seleccionado';
+    } else if (unlocked) {
+      btn.className = 'btn btn-sm btn-blue';
+      btn.textContent = 'Elegir';
+      btn.onclick = () => {
+        sound.playInteract();
+        saveData.selectedChar = ch.id;
+        writeSave();
+        renderCharactersGrid();
+      };
+    } else {
+      btn.className = 'btn btn-sm btn-yellow';
+      btn.textContent = `🔒 🪙 ${ch.price}`;
+      btn.onclick = () => {
+        if (saveData.coins >= ch.price) {
+          saveData.coins -= ch.price;
+          saveData.unlockedChars.push(ch.id);
+          saveData.selectedChar = ch.id;
+          sound.playVictory();
+          writeSave();
+          showToast(`🎉 ¡${ch.name} desbloqueado!`);
+          renderCharactersGrid();
+        } else {
+          sound.playError();
+          showToast(`Necesitas ${ch.price} monedas`);
+        }
+      };
+    }
+    card.appendChild(btn);
+    grid.appendChild(card);
+  });
+}
+
+function renderLevelsGrid() {
+  const grid = document.getElementById('levels-grid');
+  grid.innerHTML = '';
+  LEVELS.forEach(lv => {
+    const unlocked = lv.id <= saveData.unlockedLevel;
+    const stars = saveData.levelStars[lv.id] || 0;
+    const card = document.createElement('div');
+    card.className = `card ${!unlocked ? 'locked' : ''}`;
+    card.innerHTML = `
+      <div style="font-size:2.2rem;">${unlocked ? lv.icon : '🔒'}</div>
+      <div class="card-title">Nivel ${lv.id}: ${lv.title}</div>
+      <div style="font-size:1rem; margin-bottom:4px;">${'⭐'.repeat(stars)}${'☆'.repeat(3 - stars)}</div>
+      <div class="card-desc">${lv.mission}</div>
+    `;
+    const btn = document.createElement('button');
+    btn.className = `btn btn-sm ${unlocked ? 'btn-pink' : 'btn-blue'}`;
+    btn.textContent = unlocked ? '▶ Jugar Nivel' : 'Bloqueado';
+    if (unlocked) {
+      btn.onclick = () => {
+        hideAllScreens();
+        startLevel(lv.id);
+      };
+    }
+    card.appendChild(btn);
+    grid.appendChild(card);
+  });
+}
+
+function renderMinigamesGrid() {
+  const grid = document.getElementById('minigames-grid');
+  grid.innerHTML = '';
+  MINIGAMES.forEach(mg => {
+    const best = saveData.minigameBest[mg.id] || 0;
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div style="font-size:2.2rem;">${mg.icon}</div>
+      <div class="card-title">${mg.id}. ${mg.title}</div>
+      <div class="card-desc">${mg.desc}</div>
+      <div style="font-size:0.8rem; font-weight:700; color:#e04f92; margin-bottom:6px;">🏆 Récord: ${best}</div>
+    `;
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-sm btn-orange';
+    btn.textContent = '🎮 Jugar';
+    btn.onclick = () => launchMinigame(mg.id);
+    card.appendChild(btn);
+    grid.appendChild(card);
+  });
+}
+
+function renderShopAndCollection() {
+  const shopGrid = document.getElementById('shop-grid');
+  shopGrid.innerHTML = '';
+  SHOP_ITEMS.forEach(item => {
+    const owned = saveData.purchasedItems.includes(item.id);
+    const equipped = saveData.equippedHat === item.id || (item.id === 'trail_stars' && saveData.trailEnabled);
+    const card = document.createElement('div');
+    card.className = `card ${equipped ? 'selected' : ''}`;
+    card.innerHTML = `
+      <div style="font-size:2.2rem;">${item.icon}</div>
+      <div class="card-title">${item.name}</div>
+      <div class="card-desc">${item.desc}</div>
+    `;
+    const btn = document.createElement('button');
+    if (owned) {
+      btn.className = `btn btn-sm ${equipped ? 'btn-play' : 'btn-blue'}`;
+      btn.style.margin = '0';
+      btn.textContent = equipped ? '✔ Equipado' : 'Equipar';
+      btn.onclick = () => {
+        sound.playInteract();
+        if (item.id.startsWith('hat_')) {
+          saveData.equippedHat = saveData.equippedHat === item.id ? null : item.id;
+        } else if (item.id === 'trail_stars') {
+          saveData.trailEnabled = !saveData.trailEnabled;
+        }
+        writeSave();
+        renderShopAndCollection();
+      };
+    } else {
+      btn.className = 'btn btn-sm btn-yellow';
+      btn.textContent = `Comprar 🪙 ${item.price}`;
+      btn.onclick = () => {
+        if (saveData.coins >= item.price) {
+          saveData.coins -= item.price;
+          saveData.purchasedItems.push(item.id);
+          if (item.id.startsWith('hat_')) saveData.equippedHat = item.id;
+          if (item.id === 'trail_stars') saveData.trailEnabled = true;
+          sound.playVictory();
+          writeSave();
+          showToast(`🎁 ¡Compraste ${item.name}!`);
+          renderShopAndCollection();
+        } else {
+          sound.playError();
+          showToast('¡No tienes suficientes monedas!');
+        }
+      };
+    }
+    card.appendChild(btn);
+    shopGrid.appendChild(card);
+  });
+
+  const colGrid = document.getElementById('collection-grid');
+  colGrid.innerHTML = '';
+  LEVELS.forEach(lv => {
+    const found = saveData.collectibles.includes(lv.collectible.id);
+    const card = document.createElement('div');
+    card.className = `card ${!found ? 'locked' : ''}`;
+    card.innerHTML = `
+      <div style="font-size:2.1rem;">${found ? lv.collectible.icon : '❓'}</div>
+      <div class="card-title">${found ? lv.collectible.name : 'Objeto Secreto'}</div>
+      <div class="card-desc">Nivel ${lv.id}: ${lv.title}</div>
+    `;
+    colGrid.appendChild(card);
+  });
+}
+
+// 10. NAVEGACIÓN ENTRE PANTALLAS Y CONTROLES DE INTERFAZ
+function hideAllScreens() {
+  document.querySelectorAll('.ui-screen').forEach(s => s.classList.add('hidden'));
+  document.getElementById('minigame-dom-overlay').classList.add('hidden');
+}
+
+function showGameplayUI(title, mission, showTouch = true) {
+  document.getElementById('game-hud').classList.remove('hidden');
+  document.getElementById('hud-level-name').textContent = title;
+  document.getElementById('hud-mission-text').textContent = mission;
+  if (showTouch) {
+    document.getElementById('touch-controls').classList.remove('hidden');
+  } else {
+    document.getElementById('touch-controls').classList.add('hidden');
+  }
+}
+
+function hideGameplayUI() {
+  document.getElementById('game-hud').classList.add('hidden');
+  document.getElementById('touch-controls').classList.add('hidden');
+  document.getElementById('dialogue-box').classList.add('hidden');
+}
+
+function updateLevelHud() {
+  if (!levelState) return;
+  document.getElementById('hud-coins').textContent = levelState.levelCoins;
+  document.getElementById('hud-stars').textContent = `${levelState.levelStars}/3`;
+}
+
+function startLevel(levelId) {
+  const lv = LEVELS.find(l => l.id === levelId) || LEVELS[0];
+  currentLevelObj = lv;
+  levelState = buildLevelState(lv);
+  gameMode = 'LEVEL';
+  sound.startMusic();
+  showGameplayUI(`Nivel ${lv.id}: ${lv.title}`, lv.mission, true);
+  updateLevelHud();
+}
+
+function openHomeScreen() {
+  hideAllScreens();
+  hideGameplayUI();
+  gameMode = 'MENU';
+  updateHomeStats();
+  document.getElementById('screen-home').classList.remove('hidden');
+}
+
+function togglePause(pause) {
+  if (pause) {
+    window._prevMode = gameMode;
+    gameMode = 'PAUSED';
+    document.getElementById('screen-pause').classList.remove('hidden');
+  } else {
+    document.getElementById('screen-pause').classList.add('hidden');
+    gameMode = window._prevMode || 'LEVEL';
+  }
+}
+
+function toggleFullscreen() {
+  const docEl = document.documentElement;
+  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+    if (docEl.requestFullscreen) docEl.requestFullscreen().catch(() => {});
+    else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
+  } else {
+    if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast-banner');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function getSpeciesEmoji(sp) {
+  const map = { pig: '🐷', sheep: '🐑', rabbit: '🐰', dog: '🐶', pony: '🐴', elephant: '🐘', cat: '🐱' };
+  return map[sp] || '🐷';
+}
+
+// Eventos de botones principales
+document.getElementById('btn-start-play').onclick = () => {
+  sound.init();
+  hideAllScreens();
+  startLevel(saveData.unlockedLevel);
+};
+
+document.querySelectorAll('[data-open]').forEach(btn => {
+  btn.onclick = () => {
+    sound.init();
+    const target = btn.getAttribute('data-open');
+    if (target === 'screen-characters') renderCharactersGrid();
+    if (target === 'screen-levels') renderLevelsGrid();
+    if (target === 'screen-minigames') renderMinigamesGrid();
+    if (target === 'screen-shop') renderShopAndCollection();
+    document.getElementById(target).classList.remove('hidden');
+  };
+});
+
+document.querySelectorAll('[data-close]').forEach(btn => {
+  btn.onclick = () => {
+    const target = btn.getAttribute('data-close');
+    document.getElementById(target).classList.add('hidden');
+  };
+});
+
+document.getElementById('btn-home-fs').onclick = toggleFullscreen;
+document.getElementById('btn-hud-fs').onclick = toggleFullscreen;
+document.getElementById('cfg-fs-btn').onclick = toggleFullscreen;
+
+document.getElementById('btn-hud-pause').onclick = () => togglePause(true);
+document.getElementById('btn-resume').onclick = () => togglePause(false);
+document.getElementById('btn-restart-level').onclick = () => {
+  document.getElementById('screen-pause').classList.add('hidden');
+  if (window._prevMode === 'MINIGAME_CANVAS' && mgCanvasState) {
+    launchMinigame(mgCanvasState.mg.id);
+  } else if (currentLevelObj) {
+    startLevel(currentLevelObj.id);
+  }
+};
+document.getElementById('btn-pause-settings').onclick = () => {
+  document.getElementById('screen-settings').classList.remove('hidden');
+};
+document.getElementById('btn-exit-home').onclick = openHomeScreen;
+document.getElementById('btn-victory-home').onclick = openHomeScreen;
+
+// Configuración de Audio y Reinicio
+const musicSlider = document.getElementById('cfg-music-vol');
+const sfxSlider = document.getElementById('cfg-sfx-vol');
+const muteBtn = document.getElementById('cfg-mute-btn');
+
+musicSlider.value = saveData.settings.musicVol;
+sfxSlider.value = saveData.settings.sfxVol;
+sound.musicVol = saveData.settings.musicVol / 100;
+sound.sfxVol = saveData.settings.sfxVol / 100;
+sound.muted = saveData.settings.muted;
+muteBtn.textContent = sound.muted ? 'Silenciado 🔇' : 'Activado 🔊';
+
+musicSlider.oninput = () => {
+  saveData.settings.musicVol = parseInt(musicSlider.value, 10);
+  sound.musicVol = saveData.settings.musicVol / 100;
+  writeSave();
+};
+
+sfxSlider.oninput = () => {
+  saveData.settings.sfxVol = parseInt(sfxSlider.value, 10);
+  sound.sfxVol = saveData.settings.sfxVol / 100;
+  writeSave();
+};
+
+muteBtn.onclick = () => {
+  sound.muted = !sound.muted;
+  saveData.settings.muted = sound.muted;
+  muteBtn.textContent = sound.muted ? 'Silenciado 🔇' : 'Activado 🔊';
+  writeSave();
+};
+
+document.getElementById('cfg-reset-btn').onclick = () => {
+  document.getElementById('reset-confirm-box').classList.remove('hidden');
+};
+document.getElementById('cfg-reset-no').onclick = () => {
+  document.getElementById('reset-confirm-box').classList.add('hidden');
+};
+document.getElementById('cfg-reset-yes').onclick = () => {
+  localStorage.removeItem(SAVE_KEY);
+  saveData = loadSave();
+  writeSave();
+  document.getElementById('reset-confirm-box').classList.add('hidden');
+  showToast('🔄 Progreso reiniciado correctamente');
+  openHomeScreen();
+};
+
+// 11. RENDERIZADO DEL FONDO ANIMADO DE INICIO Y BUCLE PRINCIPAL (60 FPS)
+function renderMenuBackground() {
+  const gY = H * 0.78;
+  const sky = ctx.createLinearGradient(0, 0, 0, gY);
+  sky.addColorStop(0, '#5ec8ff');
+  sky.addColorStop(1, '#d8f3ff');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+
+  // Nubes flotantes
+  for (let i = 0; i < 5; i++) {
+    const cx = ((globalTime * (18 + i * 4) + i * 260) % (W + 200)) - 100;
+    drawCloud(ctx, cx, 60 + (i % 3) * 42, 0.9);
+  }
+
+  // Colinas verdes suaves
+  ctx.fillStyle = '#7be866';
+  ctx.strokeStyle = '#48b835';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(W * 0.25, gY + 60, W * 0.45, Math.PI, 0);
+  ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = '#68d354';
+  ctx.beginPath();
+  ctx.arc(W * 0.78, gY + 50, W * 0.42, Math.PI, 0);
+  ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = '#5ec94b';
+  ctx.fillRect(0, gY, W, H - gY);
+
+  // Personaje seleccionado caminando alegre en el fondo
+  const curChar = CHARACTERS.find(c => c.id === saveData.selectedChar) || CHARACTERS[0];
+  const walkX = ((globalTime * 85) % (W + 140)) - 70;
+  drawCharacter(ctx, curChar, walkX, gY + 12, 'walk', 1, globalTime, {
+    hat: saveData.equippedHat,
+    extraScale: 1.15
+  });
+}
+
+function gameLoop(timestamp) {
+  if (!lastTime) lastTime = timestamp;
+  const dt = Math.min(0.05, (timestamp - lastTime) / 1000);
+  lastTime = timestamp;
+  globalTime += dt;
+
+  if (gameMode === 'MENU') {
+    renderMenuBackground();
+  } else if (gameMode === 'LEVEL') {
+    updateLevel(dt);
+    renderLevel();
+  } else if (gameMode === 'MINIGAME_CANVAS') {
+    updateCanvasMinigame(dt);
+    renderCanvasMinigame();
+  }
+
+  // Limpiar pulsaciones de un solo frame
+  input.jumpJustPressed = false;
+  input.actJustPressed = false;
+
+  requestAnimationFrame(gameLoop);
+}
+
+window.onload = () => {
+  updateHomeStats();
+  requestAnimationFrame(gameLoop);
+};
+</script>
+</body>
+</html>
